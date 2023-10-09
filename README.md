@@ -37,9 +37,9 @@ For the underlying model and theoretical background, see:
 
 Clone the repository and navigate into the project directory. Install the 'particle_lattice' package using pip:
 
-\`\`\`bash
+```bash
 pip install -e .
-\`\`\`
+```
 
 ## Usage
 
@@ -47,7 +47,7 @@ Example usage scripts are provided in the `examples/` directory.
 
 Basic usage:
 
-\`\`\`python
+```python
 from particle_lattice.core.simulation import Simulation
 
 # Initialize simulation
@@ -55,7 +55,7 @@ sim = Simulation()
 
 # Run simulation
 sim.run()
-\`\`\`
+```
 
 ## Modules
 
