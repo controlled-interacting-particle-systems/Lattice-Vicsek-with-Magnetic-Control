@@ -1,0 +1,5 @@
+matplotlib==3.8.0
+numpy==1.25.2
+pandas==2.1.1
+setuptools==65.6.3
+
