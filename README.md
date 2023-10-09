@@ -51,10 +51,10 @@ Basic usage:
 from particle_lattice.core.simulation import Simulation
 
 # Initialize simulation
-sim = Simulation()
+sim = Simulation(width, height, v0, g, density) # choose simulation parameters here
 
 # Run simulation
-sim.run()
+sim.run() # run simulation for a single time step
 ```
 
 ## Modules
