@@ -11,6 +11,13 @@ Each particle has one of four possible orientations: up, down, left, or right. T
 
 The particles' actions are dictated by transition rates (`TR` for reorientation, `TM` for migration). The simulation includes the effect of an external magnetic field that can rotate the particles.
 
+### Control Mechanism in the Lattice Vicsek Model
+
+![Control Mechanism and Tasks in Lattice Vicsek Model](https://github.com/zakaryael/MagneticVicsekLattice/blob/main/control_mechanism_and_tasks.png)
+
+This visual aid showcases the control mechanism introduced in the Lattice Vicsek Model. A simple magnetic field effect is used for 90-degree rotations. The tasks involve directing particles to either move towards or avoid specific target routes.
+
+
 ### Citation
 
 For the underlying model and theoretical background, see:
