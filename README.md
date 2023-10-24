@@ -26,6 +26,9 @@ For the underlying model and theoretical background, see:
   Fernando Peruani, Tobias Klauss, Andreas Deutsch, Anja Voss-Boehme  
   [ArXiv Paper](https://arxiv.org/pdf/1302.3797.pdf)
 
+
+### Simulation Example
+
 ![vicsek with no control](https://github.com/zakaryael/MagneticVicsekLattice/blob/main/example_animation.gif)
 
 
