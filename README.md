@@ -19,6 +19,13 @@ For the underlying model and theoretical background, see:
   Fernando Peruani, Tobias Klauss, Andreas Deutsch, Anja Voss-Boehme  
   [ArXiv Paper](https://arxiv.org/pdf/1302.3797.pdf)
 
+![vicsek with no control](https://github.com/zakaryael/MagneticVicsekLattice/example_animation.gif)
+
+
+<figure markdown>
+<figcaption>Lattice Vicsek particles without control on a simple periodic rectangular lattice</figcaption>
+</figure>
+
 ## Features
 
 - Simulate particles on a 2D lattice with periodic boundary conditions
