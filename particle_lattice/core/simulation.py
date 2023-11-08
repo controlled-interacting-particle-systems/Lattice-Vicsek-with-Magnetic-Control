@@ -1,8 +1,7 @@
 import numpy as np
 import random
 import math
-from particle_lattice.core.particle import Particle
-from particle_lattice.core.lattice import Lattice
+from particle_lattice.core.particle_lattice import ParticleLattice
 from particle_lattice.core.magnetic_field import MagneticField
 
 
