@@ -254,6 +254,36 @@ class ParticleLattice:
 
         return stats
 
+    def compute_order_parameter(self):
+        """
+        Compute the order parameter as the magnitude of the average orientation vector.
+
+        :return: The order parameter of the lattice.
+        :rtype: float
+        """
+        # Define unit vectors for each orientation
+        orientation_vectors = torch.tensor([[0, 1], [0, -1], [-1, 0], [1, 0]], dtype=torch.float32)
+        
+        # Initialize the sum of orientation vectors
+        orientation_vector_sum = torch.zeros(2, dtype=torch.float32)
+        
+        # Sum up orientation vectors for all particles
+        for i, ori_vec in enumerate(orientation_vectors):
+            num_particles = self.lattice[i].sum().item()  # Count number of particles with this orientation
+            orientation_vector_sum += num_particles * ori_vec
+        
+        # Calculate the average orientation vector
+        total_particles = self.lattice.sum().item()
+        if total_particles == 0:
+            return 0.0  # Avoid division by zero if there are no particles
+        
+        average_orientation_vector = orientation_vector_sum / total_particles
+        
+        # Calculate the magnitude of the average orientation vector
+        order_parameter = torch.norm(average_orientation_vector, p=2)
+        
+        return order_parameter.item()
+
     def print_lattice(self):
         """
         Print the lattice with arrows indicating the orientations of the particles.
