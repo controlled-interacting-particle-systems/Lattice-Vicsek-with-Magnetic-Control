@@ -198,6 +198,36 @@ class ParticleLattice:
         self.lattice[orientation, y, x] = False
 
         return True
+    
+    def reorient_particle(self, x: int, y: int, new_orientation: int) -> bool:
+        """
+        Reorient a particle at (x, y) to a new orientation.
+
+        :param x: x-coordinate of the particle.
+        :param y: y-coordinate of the particle.
+        :param new_orientation: The new orientation index for the particle.
+        :return: True if the particle was reoriented successfully, False otherwise.
+        """
+        # Get the current orientation of the particle at (x, y)
+        current_orientation = self.lattice[:, y, x].nonzero(as_tuple=True)[0]
+
+        # If no particle is found at the given location, return False
+        if len(current_orientation) == 0:
+            return False
+
+        # If the new orientation is the same as the current one, return False
+        if current_orientation == new_orientation:
+            return False
+        
+        # If the new orientation is out of bounds, return False
+        if new_orientation < 0 or new_orientation >= ParticleLattice.NUM_ORIENTATIONS:
+            return False
+
+        # Reorient the particle
+        self.lattice[current_orientation, y, x] = False
+        self.lattice[new_orientation, y, x] = True
+
+        return True
         """
         Compute various statistics of the lattice state.
 
