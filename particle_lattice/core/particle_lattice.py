@@ -65,7 +65,7 @@ class ParticleLattice:
         orientations = np.random.randint(0, ParticleLattice.NUM_ORIENTATIONS, num_particles)
 
         for pos, ori in zip(positions, orientations):
-            x, y = divmod(pos, self.width) # Convert position to (x, y) coordinates. divmod returns quotient and remainder.
+            y, x = divmod(pos, self.width) # Convert position to (x, y) coordinates. divmod returns quotient and remainder.
             self.lattice[ori, y, x] = True
  
 
