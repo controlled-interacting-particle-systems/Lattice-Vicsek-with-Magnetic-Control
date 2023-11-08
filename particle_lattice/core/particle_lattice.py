@@ -145,15 +145,31 @@ class ParticleLattice:
         return TM * v0
 
 
+    def compute_TR(self, g):
         """
-        Compute the transition rate tensor TR for reorientation.
+        Compute the reorientation transition rate tensor TR more efficiently.
 
-        :param g: Alignment sensitivity parameter.
+        :param g: Parameter controlling alignment sensitivity. Default is 1.0.
         :type g: float
         """
-        pass  # TODO: Implementation
+        # Common kernel for convolution
+        kernel = torch.tensor([[0, 1, 0], [1, 0, 1], [0, 1, 0]], dtype=torch.float32).unsqueeze(0).unsqueeze(0)
 
-    def get_statistics(self):
+        # Convolve each orientation layer of the lattice
+        TR_tensor = torch.zeros((4, self.width, self.height), dtype=torch.float32)
+        for orientation in range(4):
+            input_tensor = self.lattice[orientation].unsqueeze(0).unsqueeze(0).float()
+            TR_tensor[orientation] = F.conv2d(input_tensor, kernel, padding=1)[0, 0]
+
+        # Adjusting the TR tensor based on orientation vectors
+        TR_tensor[0], TR_tensor[1] = TR_tensor[0] - TR_tensor[1], TR_tensor[1] - TR_tensor[0]
+        TR_tensor[2], TR_tensor[3] = TR_tensor[2] - TR_tensor[3], TR_tensor[3] - TR_tensor[2]
+
+        # Apply g and exponentiate
+        TR_tensor *= g
+        TR_tensor = torch.exp(TR_tensor)
+
+        return TR_tensor
         """
         Compute various statistics of the lattice state.
 
