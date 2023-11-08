@@ -129,30 +129,22 @@ class ParticleLattice:
         # Calculate empty cells (where no particle is present)
         empty_cells = ~self.lattice.sum(dim=0).bool()
 
-        # Initialize the TM matrix to all zeros
-        TM = torch.zeros(self.width, self.height, dtype=torch.float32)
+        # Calculate potential moves in each direction
+        # Up
+        TM_up = self.lattice[0] * empty_cells.roll(shifts=1, dims=0)
+        # Down
+        TM_down = self.lattice[1] * empty_cells.roll(shifts=-1, dims=0)
+        # Left
+        TM_left = self.lattice[2] * empty_cells.roll(shifts=1, dims=1)
+        # Right
+        TM_right = self.lattice[3] * empty_cells.roll(shifts=-1, dims=1)
 
-        # Check if the particle can move in the direction it's facing
-        # Up (orientation 0): Can move if the cell above is empty
-        TM += v0 * self.lattice[0] * torch.roll(empty_cells, shifts=-1, dims=0)
-        # Down (orientation 1): Can move if the cell below is empty
-        TM += v0 * self.lattice[1] * torch.roll(empty_cells, shifts=1, dims=0)
-        # Left (orientation 2): Can move if the cell to the left is empty
-        TM += v0 * self.lattice[2] * torch.roll(empty_cells, shifts=-1, dims=1)
-        # Right (orientation 3): Can move if the cell to the right is empty
-        TM += v0 * self.lattice[3] * torch.roll(empty_cells, shifts=1, dims=1)
+        # Combine all moves
+        TM = TM_up + TM_down + TM_left + TM_right
 
-        print(TM)
-
-        # Ensure TM remains binary by clipping its values to [0, 1]
-        TM = TM.clamp(0, 1)
+        return TM * v0
 
 
-        return TM
-
-
-
-    def compute_TR_tensor(self, g):
         """
         Compute the transition rate tensor TR for reorientation.
 
