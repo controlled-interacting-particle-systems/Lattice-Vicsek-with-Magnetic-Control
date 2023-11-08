@@ -228,13 +228,31 @@ class ParticleLattice:
         self.lattice[new_orientation, y, x] = True
 
         return True
+
+    def get_statistics(self) -> dict:
         """
         Compute various statistics of the lattice state.
 
         :return: Statistics of the current lattice state.
         :rtype: dict
         """
-        pass  # TODO: Implementation
+        # Sum only the first NUM_ORIENTATIONS layers to get the number of particles
+        num_particles = self.lattice[:self.NUM_ORIENTATIONS].sum().item()
+        density = num_particles / (self.width * self.height)  # Density of particles
+        order_parameter = self.compute_order_parameter()  # Order parameter as defined before
+
+        # Count the number of particles for each orientation
+        orientation_counts = torch.sum(self.lattice[:self.NUM_ORIENTATIONS], dim=(1, 2)).tolist()
+
+        stats = {
+            'number_of_particles': num_particles,
+            'density': density,
+            'order_parameter': order_parameter,
+            'orientation_counts': orientation_counts,
+            # Include other statistics as needed
+        }
+
+        return stats
 
     def print_lattice(self):
         """
