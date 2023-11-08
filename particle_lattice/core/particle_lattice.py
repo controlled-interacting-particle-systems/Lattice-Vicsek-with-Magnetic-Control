@@ -9,26 +9,46 @@ class ParticleLattice:
     """
 
     NUM_ORIENTATIONS = 4  # Class level constant, shared by all instances of the class. Number of possible orientations for a particle
-    def __init__(self, width, height, num_layers=None):
+    def __init__(self, width: int, height: int, obstacles: torch.Tensor = None, sink: torch.Tensor = None):
         """
         Initialize the particle lattice.
 
         :param width: Width of the lattice.
-        :type width: int
         :param height: Height of the lattice.
-        :type height: int
-        :param num_layers: Number of possible orientations (4) for a particle + possibly other cell types.
-        :type num_layers: int
+        :param obstacles: A binary matrix indicating the obstacle locations.
+        :param sink: A binary matrix indicating the sink (absorption) locations.
         """
-        if num_layers is None:
-            num_layers = ParticleLattice.NUM_ORIENTATIONS
+    
         self.width = width
         self.height = height
-        self.num_layers = num_layers
+        self.num_layers =ParticleLattice.NUM_ORIENTATIONS
          
         # Initialize the lattice as a 3D tensor with dimensions corresponding to
         # layers/orientations, width, and height. 
-        self.lattice = torch.zeros((num_layers, width, height), dtype=torch.bool)
+        self.lattice = torch.zeros((self.num_layers, height, width), dtype=torch.bool)
+
+    # If an obstacles layer is provided, add it as an additional layer.
+        if obstacles is not None:
+            self.add_layer(obstacles)
+
+        # If a sink layer is provided, add it as an additional layer.
+        if sink is not None:
+            self.add_layer(sink)
+
+    def add_layer(self, layer: torch.Tensor):
+        """
+        Add a new layer to the lattice.
+
+        :param layer: A binary matrix indicating the special cells for the new layer.
+        """
+        if layer.shape != (self.height, self.width):
+            raise ValueError("Layer shape must match the dimensions of the lattice.")
+        
+        # Increment the number of layers
+        self.num_layers += 1
+        
+        # Add the new layer to the lattice
+        self.lattice = torch.cat((self.lattice, layer.unsqueeze(0)), dim=0)
 
     def initialize_lattice(self, density):
         """
