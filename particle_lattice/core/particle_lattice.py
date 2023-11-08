@@ -66,7 +66,7 @@ class ParticleLattice:
 
         for pos, ori in zip(positions, orientations):
             x, y = divmod(pos, self.width) # Convert position to (x, y) coordinates. divmod returns quotient and remainder.
-            self.lattice[ori, x, y] = True
+            self.lattice[ori, y, x] = True
  
 
     def add_particle(self, x, y, orientation):
@@ -91,7 +91,7 @@ class ParticleLattice:
         :param y: y-coordinate of the node.
         :type y: int
         """
-        self.lattice[:, x, y] = 0  # Remove particle from all orientations
+        self.lattice[:, y, x] = 0  # Remove particle from all orientations
 
     def add_particle_flux(self, number_of_particles, region):
         """
@@ -109,8 +109,8 @@ class ParticleLattice:
                 x = np.random.randint(x_min, x_max)
                 y = np.random.randint(y_min, y_max)
                 orientation = np.random.randint(0, self.num_layers)
-                if not self.lattice[orientation, x, y]:  # Check if the spot is empty
-                    self.lattice[orientation, x, y] = True
+                if not self.lattice[orientation, y, x]:  # Check if the spot is empty
+                    self.lattice[orientation, y, x] = True
                     break
 
     def query_lattice_state(self):
@@ -178,9 +178,9 @@ class ParticleLattice:
         for y in range(self.height):
             row_str = ""
             for x in range(self.width):
-                if self.lattice[:, x, y].any():
+                if self.lattice[:, y, x].any():
                     # Find which orientation(s) is/are present
-                    symbols = [orientation_symbols[i] for i in range(self.num_layers) if self.lattice[i, x, y]]
+                    symbols = [orientation_symbols[i] for i in range(self.num_layers) if self.lattice[i, y, x]]
                     row_str += "".join(symbols)
                 else:
                     row_str += "·"  # Use a dot for empty cells
