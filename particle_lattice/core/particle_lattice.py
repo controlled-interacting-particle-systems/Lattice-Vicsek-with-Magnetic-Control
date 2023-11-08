@@ -170,6 +170,34 @@ class ParticleLattice:
         TR_tensor = torch.exp(TR_tensor)
 
         return TR_tensor
+    def move_particle(self, x: int, y: int, new_x: int, new_y: int) -> bool:
+        """
+        Move a particle from (x, y) to (new_x, new_y).
+
+        :param x: Current x-coordinate of the particle.
+        :param y: Current y-coordinate of the particle.
+        :param new_x: New x-coordinate of the particle.
+        :param new_y: New y-coordinate of the particle.
+        :return: True if the particle was moved successfully, False otherwise.
+        """
+        # Get the orientation of the particle at (x, y)
+        orientation = self.lattice[:, y, x].nonzero(as_tuple=True)[0]
+
+        # If no particle is found at the given location, return False
+        if len(orientation) == 0:
+            return False
+
+        # If the target location is occupied or out of bounds, return False
+        if (new_x < 0 or new_x >= self.width or
+            new_y < 0 or new_y >= self.height or
+            self.lattice[:, new_y, new_x].any()):
+            return False
+
+        # Move the particle
+        self.lattice[orientation, new_y, new_x] = True
+        self.lattice[orientation, y, x] = False
+
+        return True
         """
         Compute various statistics of the lattice state.
 
