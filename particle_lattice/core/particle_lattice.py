@@ -222,15 +222,26 @@ class ParticleLattice:
 
         :param x: Current x-coordinate of the particle.
         :param y: Current y-coordinate of the particle.
-        :param new_x: New x-coordinate of the particle.
-        :param new_y: New y-coordinate of the particle.
-        :return: True if the particle was moved successfully, False otherwise.
+    def get_particle_orientation(self, x: int, y: int) -> int:
         """
-        # Get the orientation of the particle at (x, y)
+        Get the orientation of a particle at (x, y).
+
+        :param x: x-coordinate of the particle.
+        :type x: int
+        :param y: y-coordinate of the particle.
+        :type y: int
+        :return: The orientation of the particle.
+        :rtype: int
+        """
+        # Get the orientation of the particle
         orientation = self.lattice[:, y, x].nonzero(as_tuple=True)[0]
 
-        # If no particle is found at the given location, return False
+        # If no particle is found at the given location, return None
         if len(orientation) == 0:
+            return None
+
+        return orientation.item()
+
     def move_particle(self, x: int, y: int, orientation: int) -> bool:
         """
         Move a particle at (x, y) with a given orientation to the new position determined by the orientation.
