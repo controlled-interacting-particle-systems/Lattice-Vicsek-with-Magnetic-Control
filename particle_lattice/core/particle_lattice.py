@@ -111,7 +111,7 @@ class ParticleLattice:
         :param y: y-coordinate of the node.
         :type y: int
         """
-        self.lattice[:, y, x] = 0  # Remove particle from all orientations
+        self.lattice[:, y, x] = False  # Remove particle from all orientations
 
     def add_particle_flux(self, number_of_particles, region):
         """
