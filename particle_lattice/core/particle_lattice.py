@@ -100,7 +100,7 @@ class ParticleLattice:
         :param orientation: Orientation of the particle.
         :type orientation: int
         """
-        self.lattice[orientation, x, y] = True
+        self.lattice[orientation, y, x] = True
 
     def remove_particle(self, x, y):
         """
