@@ -89,6 +89,18 @@ class ParticleLattice:
             )  # Convert position to (x, y) coordinates. divmod returns quotient and remainder.
             self.lattice[ori, y, x] = True
 
+    def is_empty(self, x, y):
+        """
+        Check if a cell is empty.
+
+        :param x: x-coordinate of the lattice.
+        :type x: int
+        :param y: y-coordinate of the lattice.
+        :type y: int
+        :return: True if the cell is empty, False otherwise.
+        :rtype: bool
+        """
+        return not self.lattice[:, y, x].any()
     def add_particle(self, x, y, orientation):
         """
         Add a particle with a specific orientation at (x, y).
