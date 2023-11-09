@@ -145,8 +145,8 @@ class ParticleLattice:
                 x = np.random.randint(x_min, x_max)
                 y = np.random.randint(y_min, y_max)
                 orientation = np.random.randint(0, self.num_layers)
-                if not self.lattice[orientation, y, x]:  # Check if the spot is empty
-                    self.lattice[orientation, y, x] = True
+                if self.is_empty(x, y):
+                    self.add_particle(x, y, orientation)
                     break
 
     def query_lattice_state(self):
