@@ -222,6 +222,22 @@ class ParticleLattice:
 
         :param x: Current x-coordinate of the particle.
         :param y: Current y-coordinate of the particle.
+    def is_sink(self, x: int, y: int) -> bool:
+        """
+        Check if a cell is a sink.
+
+        :param x: x-coordinate of the lattice.
+        :type x: int
+        :param y: y-coordinate of the lattice.
+        :type y: int
+        :return: True if the cell is a sink, False otherwise.
+        :rtype: bool
+        """
+        return (
+            "sink" in self.layer_indices
+            and self.lattice[self.layer_indices["sink"], y, x]
+        )
+
     def get_particle_orientation(self, x: int, y: int) -> int:
         """
         Get the orientation of a particle at (x, y).
