@@ -11,6 +11,7 @@ class Visualization:
     Attributes:
         lattice (Lattice): The lattice object.
     """
+
     def __init__(self, lattice):
         self.lattice = lattice
 
@@ -25,14 +26,14 @@ class Visualization:
             vertices = [(x - size, y), (x + size, y - size), (x + size, y + size)]
         elif orientation == 3:  # Right
             vertices = [(x + size, y), (x - size, y - size), (x - size, y + size)]
-        
-        polygon = Polygon(vertices, closed=True, facecolor='none', edgecolor=color)
+
+        polygon = Polygon(vertices, closed=True, facecolor="none", edgecolor=color)
         ax.add_patch(polygon)
 
     def animate_lattice(self, num_frames, time_interval, simulation):
         """
         Animate the lattice with particles and their orientations.
-        
+
         :param num_frames: Number of frames for the animation.
         :type num_frames: int
         :param time_interval: Time interval between frames.
@@ -41,8 +42,13 @@ class Visualization:
         :type simulation: Simulation
         """
         fig, ax = plt.subplots()
-        orientation_colors = ['r', 'g', 'b', 'm']  # Different colors for each orientation
-            
+        orientation_colors = [
+            "r",
+            "g",
+            "b",
+            "m",
+        ]  # Different colors for each orientation
+
         def update(frame):
             ax.clear()
             simulation.run_time_step()
@@ -55,10 +61,10 @@ class Visualization:
                         color = orientation_colors[orientation]
                         self.draw_triangle(x, y, orientation, color, ax)
 
-            ax.set_aspect('equal', 'box')
+            ax.set_aspect("equal", "box")
             ax.set_xlim(-1, self.lattice.width)
             ax.set_ylim(-1, self.lattice.height)
-            
+
             # Display the elapsed time
             elapsed_time_str = f"Elapsed Time: {simulation.t:.2f}"
             time_steps_str = f"Time Steps: {simulation.time_steps}"
