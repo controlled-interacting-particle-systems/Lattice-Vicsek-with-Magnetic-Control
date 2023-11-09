@@ -32,7 +32,7 @@ class ParticleLattice:
         """
         self.width = width
         self.height = height
-        self.num_layers = 4  # Starting with 4 orientation layers
+        self.num_layers = self.NUM_ORIENTATIONS  # Starting with 4 orientation layers
 
         # Initialize the lattice as a 3D tensor with dimensions corresponding to
         # layers/orientations, width, and height.
