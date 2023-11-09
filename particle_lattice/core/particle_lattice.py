@@ -215,13 +215,32 @@ class ParticleLattice:
         TR_tensor = torch.exp(TR_tensor)
 
         return TR_tensor
-
-    def move_particle(self, x: int, y: int, new_x: int, new_y: int) -> bool:
+    
+    def get_target_position(self, x: int, y: int, orientation: int) -> tuple:
         """
-        Move a particle from (x, y) to (new_x, new_y).
+        Get the expected position of a particle at (x, y) with a given orientation.
 
         :param x: Current x-coordinate of the particle.
         :param y: Current y-coordinate of the particle.
+        :param orientation: Current orientation of the particle which determines the direction of movement.
+        :return: The expected position of the particle.
+        :rtype: tuple
+        """
+        if orientation < 0 or orientation >= ParticleLattice.NUM_ORIENTATIONS:
+            raise ValueError("Invalid orientation index.")
+
+        # Calculate new position based on orientation
+        if orientation == self.layer_indices["up"]:
+            new_x, new_y = x, (y - 1) % self.height
+        elif orientation == self.layer_indices["down"]:
+            new_x, new_y = x, (y + 1) % self.height
+        elif orientation == self.layer_indices["left"]:
+            new_x, new_y = (x - 1) % self.width, y
+        elif orientation == self.layer_indices["right"]:
+            new_x, new_y = (x + 1) % self.width, y
+
+        return (new_x, new_y)
+    
     def is_obstacle(self, x: int, y: int) -> bool:
         """
         Check if a cell is an obstacle.
