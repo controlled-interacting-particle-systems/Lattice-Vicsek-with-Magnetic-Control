@@ -101,6 +101,7 @@ class ParticleLattice:
         :rtype: bool
         """
         return not self.lattice[:, y, x].any()
+
     def add_particle(self, x, y, orientation):
         """
         Add a particle with a specific orientation at (x, y).
@@ -112,7 +113,10 @@ class ParticleLattice:
         :param orientation: Orientation of the particle.
         :type orientation: int
         """
-        self.lattice[orientation, y, x] = True
+        if self.is_empty(x, y):
+            self.lattice[orientation, y, x] = True
+        else:
+            raise ValueError("Cannot add particle, cell is occupied.")
 
     def remove_particle(self, x, y):
         """
@@ -227,21 +231,29 @@ class ParticleLattice:
 
         # If no particle is found at the given location, return False
         if len(orientation) == 0:
+    def move_particle(self, x: int, y: int, orientation: int) -> bool:
+        """
+        Move a particle at (x, y) with a given orientation to the new position determined by the orientation.
+        :param x: Current x-coordinate of the particle.
+        :param y: Current y-coordinate of the particle.
+        :param orientation: Current orientation of the particle which determines the direction of movement.
+        :return: True if the particle was moved successfully, False otherwise.
+        """
+        # Get the expected position of the particle
+        new_x, new_y = self.get_target_position(x, y, orientation)
+
+        # Check if the new position is occupied or is an obstacle
+        if self.is_obstacle(new_x, new_y) or not self.is_empty(new_x, new_y):
             return False
 
-        # If the target location is occupied or out of bounds, return False
-        if (
-            new_x < 0
-            or new_x >= self.width
-            or new_y < 0
-            or new_y >= self.height
-            or self.lattice[:, new_y, new_x].any()
-        ):
-            return False
+        # Check if the new position is a sink, if so remove the particle
+        if self.is_sink(new_x, new_y):
+            self.remove_particle(x, y)
+            return True
 
         # Move the particle
-        self.lattice[orientation, new_y, new_x] = True
-        self.lattice[orientation, y, x] = False
+        self.remove_particle(x, y)
+        self.add_particle(new_x, new_y, orientation)
 
         return True
 
