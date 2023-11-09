@@ -222,6 +222,22 @@ class ParticleLattice:
 
         :param x: Current x-coordinate of the particle.
         :param y: Current y-coordinate of the particle.
+    def is_obstacle(self, x: int, y: int) -> bool:
+        """
+        Check if a cell is an obstacle.
+
+        :param x: x-coordinate of the lattice.
+        :type x: int
+        :param y: y-coordinate of the lattice.
+        :type y: int
+        :return: True if the cell is an obstacle, False otherwise.
+        :rtype: bool
+        """
+        return (
+            "obstacles" in self.layer_indices
+            and self.lattice[self.layer_indices["obstacles"], y, x]
+        )
+    
     def is_sink(self, x: int, y: int) -> bool:
         """
         Check if a cell is a sink.
