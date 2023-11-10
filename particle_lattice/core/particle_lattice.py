@@ -187,6 +187,9 @@ class ParticleLattice:
         :param g: Parameter controlling alignment sensitivity. Default is 1.0.
         :type g: float
         """
+        # Compute occupied cells
+        occupied_cells = self.lattice.sum(dim=0).bool()
+
         # Common kernel for convolution
         kernel = (
             torch.tensor([[0, 1, 0], [1, 0, 1], [0, 1, 0]], dtype=torch.float32)
@@ -195,7 +198,7 @@ class ParticleLattice:
         )
 
         # Convolve each orientation layer of the lattice
-        TR_tensor = torch.zeros((4, self.width, self.height), dtype=torch.float32)
+        TR_tensor = torch.zeros((4, self.height, self.width), dtype=torch.float32)
         for orientation in range(4):
             input_tensor = self.lattice[orientation].unsqueeze(0).unsqueeze(0).float()
             TR_tensor[orientation] = F.conv2d(input_tensor, kernel, padding=1)[0, 0]
@@ -213,6 +216,9 @@ class ParticleLattice:
         # Apply g and exponentiate
         TR_tensor *= g
         TR_tensor = torch.exp(TR_tensor)
+
+        # Apply occupied cells mask
+        TR_tensor *= occupied_cells
 
         return TR_tensor
     
