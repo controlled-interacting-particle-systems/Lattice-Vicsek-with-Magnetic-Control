@@ -24,7 +24,12 @@ class Simulation:
         """
         Update the rates tensor based on the current state of the lattice.
         """
-        pass
+        TR = self.lattice.compute_TR(self.g)
+        self.rates[:4, :, :] = TR
+
+        TM = self.lattice.compute_TM(self.v0)
+        self.rates[4, :, :] = TM
+
 
     def run_time_step(self, delta_t):
         """
