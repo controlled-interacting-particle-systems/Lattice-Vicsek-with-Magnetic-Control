@@ -58,6 +58,20 @@ class Simulation:
         event_type, y, x = torch.unravel_index(chosen_index, self.rates.shape)
         return (event_type.item(), y.item(), x.item())
     
+    def perform_event(self, event: Tuple[int, int, int]) -> None:
+        """
+        Perform an event on the lattice.
+
+        :param event: The event to perform, given as (event_type, x, y)
+        """
+        event_type, x, y = event
+
+        if event_type < 4:  # Reorientation event
+            self.lattice.reorient_particle(x, y, event_type)
+        else:  # Migration event
+            self.lattice.move_particle(x, y)
+
+
         """
         Run the simulation for a single time step.
         :param delta_t: The time increment for the simulation step.
