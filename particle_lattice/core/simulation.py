@@ -1,4 +1,5 @@
 import torch
+from typing import Optional, Tuple
 
 class Simulation:
     def __init__(self, lattice, magnetic_field, g, v0, magnetic_field_interval):
@@ -40,6 +41,23 @@ class Simulation:
         assert total_rate > 0, "Total rate must be positive to sample from Exponential distribution."
         return torch.distributions.Exponential(total_rate).sample().item()
 
+    def choose_event(self) -> Optional[Tuple[int, int, int]]:
+        """
+        Choose an event based on the rates.
+
+        :return: An Optional tuple (event_type, x, y) if an event is chosen, else None.
+        """
+        rates_flat: torch.Tensor = self.rates.view(-1)
+        total_rate: float = rates_flat.sum().item()
+        if total_rate == 0:
+            return None
+
+        chosen_index: int = torch.multinomial(rates_flat / total_rate, 1).item()
+        
+        # Convert the flat index back into 3D index
+        event_type, y, x = torch.unravel_index(chosen_index, self.rates.shape)
+        return (event_type.item(), y.item(), x.item())
+    
         """
         Run the simulation for a single time step.
         :param delta_t: The time increment for the simulation step.
