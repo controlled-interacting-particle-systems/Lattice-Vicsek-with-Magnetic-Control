@@ -29,9 +29,17 @@ class Simulation:
 
         TM = self.lattice.compute_TM(self.v0)
         self.rates[4, :, :] = TM
+    
+    def next_event_time(self) -> float:
+        """
+        Compute the time until the next event.
 
+        :return: float - The time until the next event.
+        """
+        total_rate = self.rates.sum()
+        assert total_rate > 0, "Total rate must be positive to sample from Exponential distribution."
+        return torch.distributions.Exponential(total_rate).sample().item()
 
-    def run_time_step(self, delta_t):
         """
         Run the simulation for a single time step.
         :param delta_t: The time increment for the simulation step.
