@@ -72,8 +72,35 @@ class Simulation:
             self.lattice.move_particle(x, y)
 
 
+    def run(self) -> Optional[Tuple[int, int, int]]:
         """
         Run the simulation for a single time step.
-        :param delta_t: The time increment for the simulation step.
+        
+        :return: An Optional tuple (event_type, x, y) representing the event, or None.
         """
-        pass
+        # Compute the time until the next event
+        delta_t = self.next_event_time()
+        # Update the time
+        self.t += delta_t
+        self.time_since_last_magnetic_field += delta_t
+
+        # Check if it is time to apply the magnetic field
+        if self.time_since_last_magnetic_field >= self.magnetic_field_interval:
+            self.magnetic_field.apply(self.lattice)
+            self.time_since_last_magnetic_field = 0.0
+
+        # Choose an event
+        event = self.choose_event()
+
+        # Perform the event
+        self.perform_event(event)
+
+        # Update the rates
+        self.update_rates()
+
+        # Update the time till next magnetic field application
+        self.t_magnetic_field -= delta_t
+
+        # Return the event
+        return event
+       
