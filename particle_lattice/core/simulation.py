@@ -1,5 +1,7 @@
 import torch
 from typing import Optional, Tuple
+from particle_lattice.core.lattice import ParticleLattice
+from particle_lattice.core.magnetic_field import MagneticField
 
 class Simulation:
     def __init__(self, lattice, magnetic_field, g, v0, magnetic_field_interval):
