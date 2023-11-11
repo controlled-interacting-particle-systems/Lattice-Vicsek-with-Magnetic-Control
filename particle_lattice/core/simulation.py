@@ -22,6 +22,10 @@ class Simulation:
         self.rates = torch.zeros((5, lattice.height, lattice.width), dtype=torch.float32)
         self.time_since_last_magnetic_field = 0.0
         self.update_rates()
+        # Initialize time and time till next magnetic field application
+        self.t = 0.0
+        self.t_magnetic_field = self.magnetic_field_interval
+
 
     def update_rates(self):
         """
