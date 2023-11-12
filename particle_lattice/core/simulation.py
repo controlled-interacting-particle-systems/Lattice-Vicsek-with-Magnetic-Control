@@ -1,7 +1,8 @@
 import torch
 from typing import Optional, Tuple
-from particle_lattice.core.lattice import ParticleLattice
+from particle_lattice.core.particle_lattice import ParticleLattice
 from particle_lattice.core.magnetic_field import MagneticField
+
 
 class Simulation:
     def __init__(self, lattice, magnetic_field, g, v0, magnetic_field_interval):
@@ -19,13 +20,14 @@ class Simulation:
         self.g = g
         self.v0 = v0
         self.magnetic_field_interval = magnetic_field_interval
-        self.rates = torch.zeros((5, lattice.height, lattice.width), dtype=torch.float32)
+        self.rates = torch.zeros(
+            (5, lattice.height, lattice.width), dtype=torch.float32
+        )
         self.time_since_last_magnetic_field = 0.0
         self.update_rates()
         # Initialize time and time till next magnetic field application
         self.t = 0.0
         self.t_magnetic_field = self.magnetic_field_interval
-
 
     def update_rates(self):
         """
@@ -36,7 +38,7 @@ class Simulation:
 
         TM = self.lattice.compute_TM(self.v0)
         self.rates[4, :, :] = TM
-    
+
     def next_event_time(self) -> float:
         """
         Compute the time until the next event.
@@ -44,7 +46,9 @@ class Simulation:
         :return: float - The time until the next event.
         """
         total_rate = self.rates.sum()
-        assert total_rate > 0, "Total rate must be positive to sample from Exponential distribution."
+        assert (
+            total_rate > 0
+        ), "Total rate must be positive to sample from Exponential distribution."
         return torch.distributions.Exponential(total_rate).sample().item()
 
     def choose_event(self) -> Optional[Tuple[int, int, int]]:
@@ -59,11 +63,11 @@ class Simulation:
             return None
 
         chosen_index: int = torch.multinomial(rates_flat / total_rate, 1).item()
-        
+
         # Convert the flat index back into 3D index
         event_type, y, x = torch.unravel_index(chosen_index, self.rates.shape)
         return (event_type.item(), y.item(), x.item())
-    
+
     def perform_event(self, event: Tuple[int, int, int]) -> None:
         """
         Perform an event on the lattice.
@@ -77,11 +81,10 @@ class Simulation:
         else:  # Migration event
             self.lattice.move_particle(x, y)
 
-
     def run(self) -> Optional[Tuple[int, int, int]]:
         """
         Run the simulation for a single time step.
-        
+
         :return: An Optional tuple (event_type, x, y) representing the event, or None.
         """
         # Compute the time until the next event
@@ -109,4 +112,3 @@ class Simulation:
 
         # Return the event
         return event
-       
