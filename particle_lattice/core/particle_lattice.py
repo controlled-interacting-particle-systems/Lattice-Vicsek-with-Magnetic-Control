@@ -221,7 +221,7 @@ class ParticleLattice:
         TR_tensor *= occupied_cells
 
         return TR_tensor
-    
+
     def get_target_position(self, x: int, y: int, orientation: int) -> tuple:
         """
         Get the expected position of a particle at (x, y) with a given orientation.
@@ -246,7 +246,7 @@ class ParticleLattice:
             new_x, new_y = (x + 1) % self.width, y
 
         return (new_x, new_y)
-    
+
     def is_obstacle(self, x: int, y: int) -> bool:
         """
         Check if a cell is an obstacle.
@@ -262,7 +262,7 @@ class ParticleLattice:
             "obstacles" in self.layer_indices
             and self.lattice[self.layer_indices["obstacles"], y, x]
         )
-    
+
     def is_sink(self, x: int, y: int) -> bool:
         """
         Check if a cell is a sink.
