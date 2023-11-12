@@ -135,7 +135,7 @@ class ParticleLattice:
 
         :param number_of_particles: Number of particles to add.
         :type number_of_particles: int
-        param region: The region where particles are to be added, defined as (x_min, x_max, y_min, y_max).
+        :param region: The region where particles are to be added, defined as (x_min, x_max, y_min, y_max).
         :type region: tuple
         """
         x_min, x_max, y_min, y_max = region
