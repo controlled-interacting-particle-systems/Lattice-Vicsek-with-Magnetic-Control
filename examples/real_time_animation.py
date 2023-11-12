@@ -1,6 +1,6 @@
 # Import necessary modules
-from particle_lattice.core.simulation import Simulation
-from particle_lattice.visualization.visualization import Visualization
+from vlmc.core.simulation import Simulation
+from vlmc.visualization.visualization import Visualization
 
 # Initialize simulation parameters
 width, height = 10, 10  # Lattice dimensions

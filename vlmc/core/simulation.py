@@ -1,7 +1,7 @@
 import torch
 from typing import Optional, Tuple
-from particle_lattice.core.particle_lattice import ParticleLattice
-from particle_lattice.core.magnetic_field import MagneticField
+from vlmc.core.particle_lattice import ParticleLattice
+from vlmc.core.magnetic_field import MagneticField
 
 
 class Simulation:
