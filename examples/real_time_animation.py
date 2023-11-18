@@ -1,6 +1,6 @@
 # Import necessary modules
 from vlmc.core.simulation import Simulation
-from vlmc.visualization.visualization import Visualization
+from vlmc.data_handling.visualization import Visualization
 
 # Initialize simulation parameters
 width, height = 10, 10  # Lattice dimensions
