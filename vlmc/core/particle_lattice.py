@@ -10,8 +10,8 @@ class ParticleLattice:
 
     ORIENTATION_LAYERS = [
         "up",
-        "down",
         "left",
+        "down",
         "right",
     ]  # Class level constants for layer names
     NUM_ORIENTATIONS = 4  # Class level constant, shared by all instances of the class. Number of possible orientations for a particle
@@ -36,7 +36,7 @@ class ParticleLattice:
 
         # Initialize the lattice as a 3D tensor with dimensions corresponding to
         # layers/orientations, width, and height.
-        self.lattice = torch.zeros((self.num_layers, height, width), dtype=torch.bool)
+        self.lattice = torch.zeros((self.num_layers, height, width), dtype=torch.bool) # the lattice is a 3D tensor with dimensions corresponding to layers/orientations, width, and height. orientation layers are up, down, left, and right in that order.
 
         # Layer indices will map layer names to their indices
         self.layer_indices = {name: i for i, name in enumerate(self.ORIENTATION_LAYERS)}
@@ -48,6 +48,34 @@ class ParticleLattice:
         # If a sink layer is provided, add it as an additional layer.
         if sink is not None:
             self.add_layer(sink, "sink")
+        
+    def _create_index_to_symbol_mapping(self):
+        orientation_symbols = {
+            "up": "↑",
+            "down": "↓",
+            "left": "←",
+            "right": "→"
+        }
+        return {self.layer_indices[name]: symbol 
+                for name, symbol in orientation_symbols.items()}
+
+    def __str__(self):
+        index_to_symbol = self._create_index_to_symbol_mapping()
+        lattice_str = ""
+
+        for y in range(self.height):
+            row_str = ""
+            for x in range(self.width):
+                if self.is_empty(x, y):
+                    row_str += "·"  # Use a dot for empty cells
+                else:
+                    orientation_index = self.get_particle_orientation(x, y)
+                    symbol = index_to_symbol[orientation_index]
+                    row_str += symbol
+                row_str += " "  # Add space between cells
+            lattice_str += row_str + "\n"
+
+        return lattice_str
 
     def add_layer(self, layer: torch.Tensor, layer_name: str):
         """
@@ -158,7 +186,7 @@ class ParticleLattice:
         """
         return self.lattice
 
-    def compute_TM(self, v0):
+    def compute_tm(self, v0):
         """
         Compute the migration transition rate tensor TM with periodic boundary conditions.
         """
@@ -167,28 +195,25 @@ class ParticleLattice:
 
         # Calculate potential moves in each direction
         # Up
-        TM_up = self.lattice[0] * empty_cells.roll(shifts=1, dims=0)
+        TM_up = self.lattice[self.layer_indices["up"]] * empty_cells.roll(shifts=1, dims=0)
         # Down
-        TM_down = self.lattice[1] * empty_cells.roll(shifts=-1, dims=0)
+        TM_down = self.lattice[self.layer_indices["down"]] * empty_cells.roll(shifts=-1, dims=0)
         # Left
-        TM_left = self.lattice[2] * empty_cells.roll(shifts=1, dims=1)
+        TM_left = self.lattice[self.layer_indices["left"]] * empty_cells.roll(shifts=1, dims=1)
         # Right
-        TM_right = self.lattice[3] * empty_cells.roll(shifts=-1, dims=1)
+        TM_right = self.lattice[self.layer_indices["right"]] * empty_cells.roll(shifts=-1, dims=1)
 
         # Combine all moves
         TM = TM_up + TM_down + TM_left + TM_right
 
         return TM * v0
 
-    def compute_TR(self, g):
+    def compute_log_tr(self):
         """
-        Compute the reorientation transition rate tensor TR more efficiently.
+        Compute the reorientation transition log rate tensor.
 
-        :param g: Parameter controlling alignment sensitivity. Default is 1.0.
-        :type g: float
+        :return: The reorientation transition log rate tensor.
         """
-        # Compute occupied cells
-        occupied_cells = self.lattice.sum(dim=0).bool()
 
         # Common kernel for convolution
         kernel = (
@@ -197,30 +222,44 @@ class ParticleLattice:
             .unsqueeze(0)
         )
 
-        # Convolve each orientation layer of the lattice
+        # Convolve each orientation layer of the lattice using layer indices
         TR_tensor = torch.zeros((4, self.height, self.width), dtype=torch.float32)
-        for orientation in range(4):
-            input_tensor = self.lattice[orientation].unsqueeze(0).unsqueeze(0).float()
-            TR_tensor[orientation] = F.conv2d(input_tensor, kernel, padding=1)[0, 0]
+        for orientation, index in self.layer_indices.items():
+            input_tensor = self.lattice[index].unsqueeze(0).unsqueeze(0).float()
+            TR_tensor[index] = F.conv2d(input_tensor, kernel, padding=1)[0, 0]
 
         # Adjusting the TR tensor based on orientation vectors
-        TR_tensor[0], TR_tensor[1] = (
-            TR_tensor[0] - TR_tensor[1],
-            TR_tensor[1] - TR_tensor[0],
-        )
-        TR_tensor[2], TR_tensor[3] = (
-            TR_tensor[2] - TR_tensor[3],
-            TR_tensor[3] - TR_tensor[2],
-        )
+        up_index, down_index = self.layer_indices["up"], self.layer_indices["down"]
+        left_index, right_index = self.layer_indices["left"], self.layer_indices["right"]
 
-        # Apply g and exponentiate
-        TR_tensor *= g
-        TR_tensor = torch.exp(TR_tensor)
-
-        # Apply occupied cells mask
-        TR_tensor *= occupied_cells
+        TR_tensor[up_index], TR_tensor[down_index] = (
+            TR_tensor[up_index] - TR_tensor[down_index],
+            TR_tensor[down_index] - TR_tensor[up_index],
+        )
+        TR_tensor[left_index], TR_tensor[right_index] = (
+            TR_tensor[left_index] - TR_tensor[right_index],
+            TR_tensor[right_index] - TR_tensor[left_index],
+        )
 
         return TR_tensor
+    
+    def compute_tr(self, g):
+        """
+        Compute the reorientation transition rate tensor TR.
+
+        :param g: Parameter controlling alignment sensitivity. Default is 1.0.
+        :type g: float
+        """
+        # Calculate occupied cells (where at least one particle is present)
+        occupied_cells = self.lattice.sum(dim=0).bool()
+
+
+        log_tr = self.compute_log_tr()
+        tr = torch.exp(g * log_tr) * occupied_cells
+
+        return tr
+
+
 
     def get_target_position(self, x: int, y: int, orientation: int) -> tuple:
         """
@@ -423,24 +462,3 @@ class ParticleLattice:
         order_parameter = torch.norm(average_orientation_vector, p=2)
 
         return order_parameter.item()
-
-    def print_lattice(self):
-        """
-        Print the lattice with arrows indicating the orientations of the particles.
-        """
-        orientation_symbols = ["↑", "↓", "←", "→"]
-        for y in range(self.height):
-            row_str = ""
-            for x in range(self.width):
-                if self.lattice[:, y, x].any():
-                    # Find which orientation(s) is/are present
-                    symbols = [
-                        orientation_symbols[i]
-                        for i in range(self.num_layers)
-                        if self.lattice[i, y, x]
-                    ]
-                    row_str += "".join(symbols)
-                else:
-                    row_str += "·"  # Use a dot for empty cells
-                row_str += " "  # Add space between cells
-            print(row_str)

@@ -24,26 +24,19 @@ class MagneticField:
         """
         self.current_direction = direction
 
-    def rotate_particle(self, particle):
-        """
-        Rotate the particle's orientation based on the magnetic field direction.
-
-        :param particle: The particle to rotate.
-        :type particle: Particle
-        """
-        particle.set_orientation(
-            (particle.get_orientation() - self.current_direction) % 4
-        )
 
     def apply(self, lattice):
         """
-        Apply the magnetic field to all particles on the lattice.
+        Apply the magnetic field to all particles on the lattice (a 90 degrees rotation in the prescribed direction).
 
         :param lattice: The lattice object.
         :type lattice: Lattice
         """
-        for y in range(lattice.height):
-            for x in range(lattice.width):
-                particle = lattice.grid[y, x]
-                if particle is not None:
-                    self.rotate_particle(particle)
+        # the lattice is a 3D binary tensor with dimensions corresponding to layers/orientations, width, and height. orientation layers are up, down, left, and right in that order.
+
+        # rotate the lattice by 90 degrees in the prescribed direction
+
+        # rotating the lattice is equivalent to shuffling the orientation layers
+
+        lattice.lattice = lattice.lattice.roll(self.current_direction, dims=0)
+
