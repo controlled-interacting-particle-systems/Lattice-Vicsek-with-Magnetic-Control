@@ -10,8 +10,8 @@
         left_index, right_index = self.layer_indices["left"], self.layer_indices["right"]
 
         TR_tensor[up_index], TR_tensor[down_index] = (
+        "left",
             TR_tensor[up_index] - TR_tensor[down_index],
-            TR_tensor[down_index] - TR_tensor[up_index],
         TR_tensor[left_index], TR_tensor[right_index] = (
             TR_tensor[left_index] - TR_tensor[right_index],
             TR_tensor[right_index] - TR_tensor[left_index],
