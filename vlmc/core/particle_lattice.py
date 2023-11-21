@@ -77,12 +77,22 @@ class ParticleLattice:
 
     def __str__(self):
         index_to_symbol = self._create_index_to_symbol_mapping()
+        obstacle_symbol = "■"  # Symbol for obstacles
+        sink_symbol = "▼"  # Symbol for sinks
+        particle_in_sink_symbol = "✱"  # Symbol for particle in a sink
         lattice_str = ""
 
         for y in range(self.height):
             row_str = ""
             for x in range(self.width):
-                if self.is_empty(x, y):
+                if self.obstacles[y, x]:
+                    row_str += obstacle_symbol
+                elif self.sinks[y, x]:
+                    if not self.is_empty(x, y):  # Check for particle in sink
+                        row_str += particle_in_sink_symbol
+                    else:
+                        row_str += sink_symbol
+                elif self.is_empty(x, y):
                     row_str += "·"  # Use a dot for empty cells
                 else:
                     orientation_index = self.get_particle_orientation(x, y)
@@ -92,6 +102,7 @@ class ParticleLattice:
             lattice_str += row_str + "\n"
 
         return lattice_str
+
 
     def add_layer(self, layer: torch.Tensor, layer_name: str):
         """
