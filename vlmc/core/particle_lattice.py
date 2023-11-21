@@ -144,6 +144,46 @@ class ParticleLattice:
             )  # Convert position to (x, y) coordinates. divmod returns quotient and remainder.
             if not self.is_obstacle(x, y):
                 self.add_particle(x, y, ori)
+    
+    def set_obstacle(self, x: int, y: int):
+        """
+        Set an obstacle at the specified position in the lattice, 
+        provided the cell is empty and not already an obstacle or a sink.
+
+        Parameters:
+        x (int): The x-coordinate of the position.
+        y (int): The y-coordinate of the position.
+
+        Raises:
+        ValueError: If the specified position is outside the lattice bounds or already occupied.
+        """
+        if 0 <= x < self.width and 0 <= y < self.height:
+            if not self.is_empty(x, y) or self.sinks[y, x]:
+                raise ValueError("Cannot place an obstacle on a non-empty cell or a cell with a sink.")
+            self.obstacles[y, x] = True
+        else:
+            raise ValueError("Position is outside the lattice bounds.")
+    
+    def set_sink(self, x: int, y: int):
+        """
+        Set a sink at the specified position in the lattice, 
+        provided the cell is empty and not already an obstacle or a sink.
+
+        Parameters:
+        x (int): The x-coordinate of the position.
+        y (int): The y-coordinate of the position.
+
+        Raises:
+        ValueError: If the specified position is outside the lattice bounds or already occupied.
+        """
+        if 0 <= x < self.width and 0 <= y < self.height:
+            if not self.is_empty(x, y) or self.obstacles[y, x]:
+                raise ValueError("Cannot place a sink on a non-empty cell or a cell with an obstacle.")
+            self.sinks[y, x] = True
+        else:
+            raise ValueError("Position is outside the lattice bounds.")
+
+
 
     def is_empty(self, x, y):
         """
