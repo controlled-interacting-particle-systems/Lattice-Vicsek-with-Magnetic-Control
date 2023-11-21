@@ -20,15 +20,17 @@ class ParticleLattice:
         self,
         width: int,
         height: int,
+        density: float = 0.0,
         obstacles: torch.Tensor = None,
-        sink: torch.Tensor = None,
+        sinks: torch.Tensor = None,
     ):
         """
         Initialize the particle lattice.
         :param width: Width of the lattice.
         :param height: Height of the lattice.
+        :param density: Density of particles in the lattice.
         :param obstacles: A binary matrix indicating the obstacle locations.
-        :param sink: A binary matrix indicating the sink (absorption) locations.
+        :param sinks: A binary matrix indicating the sink (absorption) locations.
         """
         self.width = width
         self.height = height
@@ -36,7 +38,9 @@ class ParticleLattice:
 
         # Initialize the lattice as a 3D tensor with dimensions corresponding to
         # layers/orientations, width, and height.
-        self.lattice = torch.zeros((self.num_layers, height, width), dtype=torch.bool) # the lattice is a 3D tensor with dimensions corresponding to layers/orientations, width, and height. orientation layers are up, down, left, and right in that order.
+        self.lattice = torch.zeros(
+            (self.num_layers, height, width), dtype=torch.bool
+        )  # the lattice is a 3D tensor with dimensions corresponding to layers/orientations, width, and height. orientation layers are up, down, left, and right in that order.
 
         # Layer indices will map layer names to their indices
         self.layer_indices = {name: i for i, name in enumerate(self.ORIENTATION_LAYERS)}
@@ -46,8 +50,12 @@ class ParticleLattice:
             self.add_layer(obstacles, "obstacles")
 
         # If a sink layer is provided, add it as an additional layer.
-        if sink is not None:
-            self.add_layer(sink, "sink")
+        if sinks is not None:
+            self.add_layer(sinks, "sinks")
+
+        # Initialize the lattice with particles at a given density.
+        self.initialize_lattice(density)
+
         
     def _create_index_to_symbol_mapping(self):
         orientation_symbols = {
