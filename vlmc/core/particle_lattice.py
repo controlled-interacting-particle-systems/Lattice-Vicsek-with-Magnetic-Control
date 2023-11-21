@@ -38,12 +38,17 @@ class ParticleLattice:
 
         # Initialize the lattice as a 3D tensor with dimensions corresponding to
         # layers/orientations, width, and height.
+
         self.lattice = torch.zeros(
             (self.num_layers, height, width), dtype=torch.bool
         )  # the lattice is a 3D tensor with dimensions corresponding to layers/orientations, width, and height. orientation layers are up, down, left, and right in that order.
 
+
         # Layer indices will map layer names to their indices
         self.layer_indices = {name: i for i, name in enumerate(self.ORIENTATION_LAYERS)}
+
+        self.obstacles = obstacles
+        self.sinks = sinks
 
         # If an obstacles layer is provided, add it as an additional layer.
         if obstacles is not None:
@@ -52,9 +57,12 @@ class ParticleLattice:
         # If a sink layer is provided, add it as an additional layer.
         if sinks is not None:
             self.add_layer(sinks, "sinks")
+        
+        self.particles = self.lattice[:self.NUM_ORIENTATIONS]
 
         # Initialize the lattice with particles at a given density.
         self.initialize_lattice(density)
+
 
         
     def _create_index_to_symbol_mapping(self):
@@ -123,7 +131,8 @@ class ParticleLattice:
             y, x = divmod(
                 pos, self.width
             )  # Convert position to (x, y) coordinates. divmod returns quotient and remainder.
-            self.lattice[ori, y, x] = True
+            if not self.is_obstacle(x, y):
+                self.add_particle(x, y, ori)
 
     def is_empty(self, x, y):
         """
@@ -136,7 +145,7 @@ class ParticleLattice:
         :return: True if the cell is empty, False otherwise.
         :rtype: bool
         """
-        return not self.lattice[:, y, x].any()
+        return not self.particles[:, y, x].any()
 
     def add_particle(self, x, y, orientation):
         """
@@ -149,10 +158,10 @@ class ParticleLattice:
         :param orientation: Orientation of the particle.
         :type orientation: int
         """
-        if self.is_empty(x, y):
+        if self.is_empty(x, y) and not self.is_obstacle(x, y):
             self.lattice[orientation, y, x] = True
         else:
-            raise ValueError("Cannot add particle, cell is occupied.")
+            raise ValueError("Cannot add particle, cell is occupied or is an obstacle.")
 
     def remove_particle(self, x, y):
         """
