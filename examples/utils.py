@@ -1,5 +1,6 @@
 import torch
 
+
 def generate_binary_matrix(height, width, topology_name, walls=None):
     """
     Generate a binary matrix representing a specified lattice topology.
@@ -66,7 +67,15 @@ def generate_binary_matrix(height, width, topology_name, walls=None):
 
     return matrix
 
-def generate_lattice_topology(height, width, obstacle_topology, sink_topology, obstacle_walls=None, sink_walls=None):
+
+def generate_lattice_topology(
+    height,
+    width,
+    obstacle_topology,
+    sink_topology,
+    obstacle_walls=None,
+    sink_walls=None,
+):
     """
     Generate lattice topologies for obstacles and sinks with optional walls.
 
@@ -110,4 +119,3 @@ def generate_lattice_topology(height, width, obstacle_topology, sink_topology, o
     sinks = torch.logical_and(sinks, torch.logical_not(obstacles))
 
     return obstacles, sinks
-
