@@ -36,23 +36,18 @@ For the underlying model and theoretical background, see:
 <figcaption>Lattice Vicsek particles without control on a simple periodic rectangular lattice</figcaption>
 </figure>
 
-## Features
-
-- Simulate particles on a 2D lattice with periodic boundary conditions
-- Control particle motion via a simple magnetic field effect
-- Data collection for post-simulation analysis
-- Modular design for easy extension and integration
-- Visualize particle motion (and magnetic field effects)
-
-## Dependencies
-
-- Python 3.x
-- NumPy
-- Matplotlib
 
 ## Installation
 
-Clone the repository and navigate into the project directory. Install the 'particle_lattice' package using pip:
+Clone the repository and navigate into the project directory. 
+Install the required packages using pip:
+
+```bash
+pip install -r requirements.txt
+```
+
+```bash
+Install the 'particle_lattice' package using pip:
 
 ```bash
 pip install -e .
@@ -64,23 +59,14 @@ Example usage scripts are provided in the `examples/` directory.
 
 Basic usage:
 
-```python
-from particle_lattice.core.simulation import Simulation
-
-# Initialize simulation
-sim = Simulation(width, height, v0, g, density) # choose simulation parameters here
-
-# Run simulation
-sim._time_step()# run simulation for a single time step
-```
+tbd
 
 ## Modules
 
 ### Core
 
+- `particle_lattice.py` 
 - `simulation.py`: Handles the main simulation loop
-- `lattice.py`: Manages the 2D grid
-- `particle.py`: Manages individual particle states
 - `magnetic_field.py`: Manages magnetic field effects on particles
 
 #### TODO
@@ -88,15 +74,6 @@ sim._time_step()# run simulation for a single time step
 - [  ] add a list of particles attribute to the lattice class to improve effeciency
 - [  ] add an apply method to the magnetic field class for increased modularity
 - [  ] implement different boundary conditions
-
-
-### Data Collection
-
-- `data_collector.py`: Handles data collection during simulation
-
-### Visualization
-
-- `visualization.py`: Provides real-time animation of the simulation
 
 #### TODO
 - [  ] post-simulation visualizations
@@ -114,8 +91,6 @@ sim._time_step()# run simulation for a single time step
 
 ## Future Extensions
 
-- different boundary conditions
-- different lattice topologies
 
 
 
