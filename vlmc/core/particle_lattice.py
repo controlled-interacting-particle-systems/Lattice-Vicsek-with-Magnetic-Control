@@ -242,14 +242,9 @@ class ParticleLattice:
         :param y: y-coordinate of the node.
         :type y: int
         """
-        if not self.is_empty(x, y):
+        if self.is_empty(x, y):
             warnings.warn(
                 "Trying to remove a particle from an empty cell. Please make sure that this is intended.",
-                stacklevel=2,
-            )
-        if self.is_sink(x, y):
-            warnings.warn(
-                "Trying to remove a particle from a sink. Please make sure that this is intended.",
                 stacklevel=2,
             )
         if self.is_obstacle(x, y):
