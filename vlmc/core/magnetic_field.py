@@ -24,7 +24,6 @@ class MagneticField:
         """
         self.current_direction = direction
 
-
     def apply(self, lattice):
         """
         Apply the magnetic field to all particles on the lattice (a 90 degrees rotation in the prescribed direction).
@@ -39,4 +38,3 @@ class MagneticField:
         # rotating the lattice is equivalent to shuffling the orientation layers
 
         lattice.lattice = lattice.lattice.roll(self.current_direction, dims=0)
-
