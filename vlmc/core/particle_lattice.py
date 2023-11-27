@@ -572,7 +572,7 @@ class ParticleLattice:
             orientation_vector_sum += num_particles * ori_vec
 
         # Calculate the average orientation vector
-        total_particles = self.lattice.sum().item()
+        total_particles = self.particles.sum().item()
         if total_particles == 0:
             return 0.0  # Avoid division by zero if there are no particles
 
