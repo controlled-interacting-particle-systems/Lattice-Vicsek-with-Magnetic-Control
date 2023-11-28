@@ -93,12 +93,13 @@ def test_add_layer():
     lattice.add_layer(layer, "test_layer")
     assert "test_layer" in lattice.layer_indices
     assert lattice.num_layers == 7
-    lattice.add_layer(layer, "test_layer")
-    assert lattice.num_layers == 7
+    with pytest.warns(UserWarning):
+        lattice.add_layer(layer, "test_layer")
+        assert lattice.num_layers == 7
     # check if it raises and error when adding a layer with wrong dimensions
     with pytest.raises(ValueError):
         layer = torch.zeros((10, 11), dtype=torch.bool)
-        lattice.add_layer(layer, "test_layer")
+        lattice.add_layer(layer, "test_layer2")
 
 
 def test_initialize_lattice():
