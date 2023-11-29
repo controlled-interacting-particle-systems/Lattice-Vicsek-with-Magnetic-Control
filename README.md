@@ -69,14 +69,16 @@ tbd
 - `magnetic_field.py`: Manages magnetic field effects on particles
 
 #### TODO
-- [ ] store rates in the simulation class to improve effeciency
-- [ ] add a list of particles attribute to the lattice class to improve effeciency
-- [ ] add an apply method to the magnetic field class for increased modularity
-- [ ] implement different boundary conditions
+- [x] store rates in the simulation class to improve effeciency
+
+- [x] add an apply method to the magnetic field class for increased modularity
+
 
 #### TODO
-- [  ] post-simulation visualizations
-- [  ] add visualization for magnetic field
+- [ ] Write IO module
+- [ ] Write visualization module
+  - [ ] Pacman
+- [ ] Dockerize the project
 
 ### Examples
 
@@ -92,4 +94,4 @@ tbd
 
 
 ## Future Extensions
-
+- [ ] Implement different magnetic field effects
