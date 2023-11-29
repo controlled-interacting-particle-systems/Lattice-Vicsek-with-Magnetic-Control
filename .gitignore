@@ -164,3 +164,4 @@ cython_debug/
 examples/ParticleLatticeSimulation.ipynb
 docs/
 .DS_Store
+xp_nb.ipynb
