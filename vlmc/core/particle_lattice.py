@@ -39,7 +39,7 @@ class ParticleLattice:
 
         # Initialize the lattice as a 3D tensor with dimensions corresponding to
         # layers/orientations, width, and height.
-        self.lattice = torch.zeros((self.num_layers, height, width), dtype=torch.bool)
+        self.griglia = torch.zeros((self.num_layers, height, width), dtype=torch.bool)
 
         # Layer indices will map layer names to their indices
         self.layer_indices = {name: i for i, name in enumerate(self.ORIENTATION_LAYERS)}
@@ -56,9 +56,9 @@ class ParticleLattice:
             self.add_layer(sinks, "sinks")
 
         # Reference to the particle, sinks and obstacles layers for easy access
-        self.particles = self.lattice[: self.NUM_ORIENTATIONS]
-        self.sinks = self.lattice[self.layer_indices["sinks"]]
-        self.obstacles = self.lattice[self.layer_indices["obstacles"]]
+        self.particles = self.griglia[: self.NUM_ORIENTATIONS]
+        self.sinks = self.griglia[self.layer_indices["sinks"]]
+        self.obstacles = self.griglia[self.layer_indices["obstacles"]]
 
         # Initialize the lattice with particles at a given density.
         self.initialize_lattice(density)
@@ -108,7 +108,7 @@ class ParticleLattice:
             raise ValueError("Layer shape must match the dimensions of the lattice.")
 
         # Add the new layer to the lattice
-        self.lattice = torch.cat((self.lattice, layer.unsqueeze(0)), dim=0)
+        self.griglia = torch.cat((self.griglia, layer.unsqueeze(0)), dim=0)
         # Map the new layer's name to its index
         if layer_name in self.layer_indices:
             warnings.warn(
@@ -130,7 +130,8 @@ class ParticleLattice:
         """
         num_cells = self.width * self.height
         num_particles = int(density * num_cells)
-
+                
+        
         # Randomly place particles
         positions = np.random.choice(
             num_cells, num_particles, replace=False
@@ -229,9 +230,15 @@ class ParticleLattice:
         :type orientation: int
         """
         if self.is_empty(x, y) and not self.is_obstacle(x, y):
-            self.lattice[orientation, y, x] = True
+            #print('adding particle at index x=%d y=%d' %(x,y))
+            #self.griglia[orientation, y, x] = True
+            self.particles[orientation, y, x] = True
+            #print(self.griglia[orientation, y, x] == True)
+            #print(self.particles[orientation, y, x] == True)
+            #print(sum(self.particles[:]))
+            #print('added particle at index x=%d y=%d' %(x,y))
         else:
-            raise ValueError("Cannot add particle, cell is occupied or is an obstacle.")
+            raise ValueError("Cannot add particle, cell is occupied or is an obstacle. x=%d, y=%d" %(x,y))
 
     def remove_particle(self, x, y):
         """
@@ -256,7 +263,9 @@ class ParticleLattice:
             raise ValueError(
                 "Cannot remove particle, cell is outside the lattice bounds."
             )
-        self.lattice[:, y, x] = False  # Remove particle from all orientations
+        self.particles[:, y, x] = False  # Remove particle from all orientations
+        #self.griglia[:, y, x] = False  # Remove particle from all orientations
+        #print('removed particle from index x=%d y=%d' %(x,y))
 
     def add_particle_flux(self, number_of_particles, region):
         """
@@ -285,30 +294,32 @@ class ParticleLattice:
         :return: The state of the lattice.
         :rtype: torch.Tensor
         """
-        return self.lattice
+        return self.griglia
 
     def compute_tm(self, v0):
         """
         Compute the migration transition rate tensor TM with periodic boundary conditions.
         """
         # Calculate empty cells (where no particle is present)
-        empty_cells = ~self.lattice.sum(dim=0).bool()
+        empty_cellspart = self.particles.sum(dim=0)
+        empty_cells = ~(empty_cellspart + self.obstacles).bool()
+        #empty_cells = ~self.griglia[:(self.NUM_ORIENTATIONS+1)].sum(dim=0).bool()
 
         # Calculate potential moves in each direction
         # Up
-        TM_up = self.lattice[self.layer_indices["up"]] * empty_cells.roll(
-            shifts=1, dims=0
+        TM_up = self.particles[self.layer_indices["up"]] * empty_cells.roll(
+            shifts=+1, dims=0
         )
         # Down
-        TM_down = self.lattice[self.layer_indices["down"]] * empty_cells.roll(
+        TM_down = self.particles[self.layer_indices["down"]] * empty_cells.roll(
             shifts=-1, dims=0
         )
         # Left
-        TM_left = self.lattice[self.layer_indices["left"]] * empty_cells.roll(
-            shifts=1, dims=1
+        TM_left = self.particles[self.layer_indices["left"]] * empty_cells.roll(
+            shifts=+1, dims=1
         )
         # Right
-        TM_right = self.lattice[self.layer_indices["right"]] * empty_cells.roll(
+        TM_right = self.particles[self.layer_indices["right"]] * empty_cells.roll(
             shifts=-1, dims=1
         )
 
@@ -337,8 +348,14 @@ class ParticleLattice:
             dtype=torch.float32,
         )
         for index in range(ParticleLattice.NUM_ORIENTATIONS):
-            input_tensor = self.particles[index].unsqueeze(0).unsqueeze(0).float()
-            TR_tensor[index] = F.conv2d(input_tensor, kernel, padding=1)[0, 0]
+                        
+            tmp_tensor = torch.cat((torch.cat((self.particles[index,:,-1].unsqueeze(-1),
+                                          self.particles[index]),dim=1),self.particles[index,:,0].unsqueeze(-1)),dim=1)
+
+            tmp_tensor = torch.cat((tmp_tensor[-1,:].unsqueeze(0),torch.cat((tmp_tensor,tmp_tensor[0,:].unsqueeze(0)),dim=0)),dim=0)
+
+            input_tensor = tmp_tensor.unsqueeze(0).unsqueeze(0).float()
+            TR_tensor[index] = F.conv2d(input_tensor, kernel, padding=0)[0, 0]
 
         # Adjusting the TR tensor based on orientation vectors
         up_index, down_index = self.layer_indices["up"], self.layer_indices["down"]
@@ -371,7 +388,8 @@ class ParticleLattice:
         log_tr = self.compute_log_tr()
         tr = torch.exp(g * log_tr) * occupied_cells
 
-        return tr
+        #return tr
+        return (tr * (torch.ones_like(self.particles) ^ self.particles )) #MODIFIED
 
     def get_target_position(self, x: int, y: int, orientation: int) -> tuple:
         """
@@ -411,7 +429,7 @@ class ParticleLattice:
         """
         return (
             "obstacles" in self.layer_indices
-            and self.lattice[self.layer_indices["obstacles"], y, x]
+            and self.griglia[self.layer_indices["obstacles"], y, x]
         )
 
     def is_sink(self, x: int, y: int) -> bool:
@@ -427,7 +445,7 @@ class ParticleLattice:
         """
         return (
             "sinks" in self.layer_indices
-            and self.lattice[self.layer_indices["sinks"], y, x]
+            and self.griglia[self.layer_indices["sinks"], y, x]
         )
 
     def get_particle_orientation(self, x: int, y: int) -> int:
@@ -462,7 +480,8 @@ class ParticleLattice:
         """
         # Check if the particle exists at the given location
         if self.is_empty(x, y):
-            raise ValueError("No particle found at the given location.")
+            print(self)
+            raise ValueError("No particle found at the given location. x=%d, y=%d" %(x,y))
 
         # Get the current orientation of the particle at (x, y)
         orientation = self.get_particle_orientation(x, y)
@@ -485,10 +504,12 @@ class ParticleLattice:
 
         # Move the particle
         self.remove_particle(x, y)
-        self.add_particle(new_x, new_y, orientation)
+        #print(sum(self.griglia[:]))
+        self.add_particle(new_x, new_y, orientation)        
 
         return True
 
+    
     def reorient_particle(self, x: int, y: int, new_orientation: int) -> bool:
         """
         Reorient a particle at (x, y) to a new orientation.
@@ -523,15 +544,19 @@ class ParticleLattice:
         :rtype: dict
         """
         # Sum only the first NUM_ORIENTATIONS layers to get the number of particles
-        num_particles = self.lattice[: self.NUM_ORIENTATIONS].sum().item()
+        #num_particles = self.griglia[: self.NUM_ORIENTATIONS].sum().item()
+        num_particles = self.particles[:].sum().item()
         density = num_particles / (self.width * self.height)  # Density of particles
         order_parameter = (
             self.compute_order_parameter()
         )  # Order parameter as defined before
 
         # Count the number of particles for each orientation
+        #orientation_counts = torch.sum(
+        #    self.griglia[: self.NUM_ORIENTATIONS], dim=(1, 2)
+        #).tolist()
         orientation_counts = torch.sum(
-            self.lattice[: self.NUM_ORIENTATIONS], dim=(1, 2)
+            self.particles, dim=(1, 2)
         ).tolist()
 
         stats = {
@@ -562,7 +587,8 @@ class ParticleLattice:
         # Sum up orientation vectors for all particles
         for i, ori_vec in enumerate(orientation_vectors):
             num_particles = (
-                self.lattice[i].sum().item()
+                #self.griglia[i].sum().item()
+                self.particles[i].sum().item()
             )  # Count number of particles with this orientation
             orientation_vector_sum += num_particles * ori_vec
 

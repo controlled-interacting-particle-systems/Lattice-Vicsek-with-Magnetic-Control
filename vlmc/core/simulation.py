@@ -5,8 +5,8 @@ from vlmc.core.particle_lattice import ParticleLattice
 from vlmc.core.magnetic_field import MagneticField
 
 
-class Simulation:
-    def __init__(self, g, v0, magnetic_field_interval, **lattice_params):
+class Simulation: #CHIARA: not sure that this is ok. I added lattice as an argument, with self.lattice the attribute of simulation. 
+    def __init__(self, Lattice, g, v0, magnetic_field_interval, **lattice_params):
         """
         Initialize the simulation with a given lattice, magnetic field, and parameters.
 
@@ -15,7 +15,8 @@ class Simulation:
         :param magnetic_field_interval: Time interval to apply the magnetic field.
         :param lattice_params: Parameters for the lattice.
         """
-        self.lattice = ParticleLattice(**lattice_params)
+        #self.lattice = ParticleLattice(**lattice_params)
+        self.lattice = Lattice
         self.magnetic_field = MagneticField(0)
         self.g = g
         self.v0 = v0
@@ -64,12 +65,15 @@ class Simulation:
         if total_rate == 0:
             return None
 
-        chosen_index: int = torch.multinomial(rates_flat / total_rate, 1).item()
+        #chosen_index: int = torch.multinomial(rates_flat / total_rate, 1).item()
+        chosen_index: int = torch.multinomial(rates_flat, 1).item() #MODIFIED
 
         # Convert the flat index back into 3D index
         # convert the flat index back into 3D index using numpy.unravel_index because torch.unravel_index is not implemented yet
 
-        event_type, y, x = np.unravel_index(chosen_index, self.rates.shape)
+        event_type, y, x = np.unravel_index(chosen_index, self.rates.shape) 
+
+        #print('choosen event %d for x=%d,y=%d' %(event_type.item(), x.item(), y.item()))
 
         return (x.item(), y.item(), event_type.item())
 
@@ -82,9 +86,10 @@ class Simulation:
         x, y, event_type = event
 
         if event_type < 4:  # Reorientation event
-            self.lattice.reorient_particle(x, y, event_type)
+            self.lattice.reorient_particle(x, y, event_type)            
         else:  # Migration event
             self.lattice.move_particle(x, y)
+
 
     def run(self) -> Optional[Tuple[int, int, int]]:
         """

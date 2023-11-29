@@ -37,4 +37,4 @@ class MagneticField:
 
         # rotating the lattice is equivalent to shuffling the orientation layers
 
-        lattice.lattice = lattice.lattice.roll(self.current_direction, dims=0)
+        lattice.griglia = lattice.griglia.roll(self.current_direction, dims=0)
