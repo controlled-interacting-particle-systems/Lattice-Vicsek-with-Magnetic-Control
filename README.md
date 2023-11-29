@@ -46,7 +46,6 @@ Install the required packages using pip:
 pip install -r requirements.txt
 ```
 
-```bash
 Install the 'particle_lattice' package using pip:
 
 ```bash
@@ -70,10 +69,10 @@ tbd
 - `magnetic_field.py`: Manages magnetic field effects on particles
 
 #### TODO
-- [  ] store rates in the simulation class to improve effeciency
-- [  ] add a list of particles attribute to the lattice class to improve effeciency
-- [  ] add an apply method to the magnetic field class for increased modularity
-- [  ] implement different boundary conditions
+- [ ] store rates in the simulation class to improve effeciency
+- [ ] add a list of particles attribute to the lattice class to improve effeciency
+- [ ] add an apply method to the magnetic field class for increased modularity
+- [ ] implement different boundary conditions
 
 #### TODO
 - [  ] post-simulation visualizations
@@ -86,13 +85,11 @@ tbd
 ### Tests
 
 #### TODO
-- [  ] add unit tests for core modules
+- [ ] add unit tests for core modules
+  - [x] unit tests for particle_lattice.py
+  - [ ] unit tests for simulation.py
+  - [ ] unit tests for magnetic_field.py
 
 
 ## Future Extensions
-
-
-
-
-
 
