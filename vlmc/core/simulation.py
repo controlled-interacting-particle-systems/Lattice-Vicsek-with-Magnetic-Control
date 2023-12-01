@@ -6,7 +6,7 @@ from vlmc.core.magnetic_field import MagneticField
 
 
 class Simulation: #CHIARA: not sure that this is ok. I added lattice as an argument, with self.lattice the attribute of simulation. 
-    def __init__(self, Lattice, g, v0, magnetic_field_interval, **lattice_params):
+    def __init__(self, Lattice, g, v0, v1, magnetic_field_interval, **lattice_params):
         """
         Initialize the simulation with a given lattice, magnetic field, and parameters.
 
@@ -20,8 +20,12 @@ class Simulation: #CHIARA: not sure that this is ok. I added lattice as an argum
         self.magnetic_field = MagneticField(0)
         self.g = g
         self.v0 = v0
+        self.v1 = v1
         self.magnetic_field_interval = magnetic_field_interval
         num_event_types = self.lattice.NUM_ORIENTATIONS + 1
+        if self.v1!=0:
+            num_event_types+=1
+            
         self.rates = torch.zeros(
             (num_event_types, self.lattice.height, self.lattice.width),
             dtype=torch.float32,
@@ -36,11 +40,15 @@ class Simulation: #CHIARA: not sure that this is ok. I added lattice as an argum
         """
         Update the rates tensor based on the current state of the lattice.
         """
-        TR = self.lattice.compute_tr(self.g)
+        TR = self.lattice.compute_tr(self.g, self.v1)
         self.rates[:4, :, :] = TR  # 4 is the number of reorientation events
 
         TM = self.lattice.compute_tm(self.v0)
-        self.rates[4, :, :] = TM  # 4 is the number of reorientation events
+        self.rates[4, :, :] = TM  # 4 is the number of migration event
+
+        if self.v1 != 0:
+            TF = self.lattice.compute_tf(self.v1)
+            self.rates[5, :, :] = TF  # 5 is the number of flow
 
     def next_event_time(self) -> float:
         """
@@ -87,8 +95,13 @@ class Simulation: #CHIARA: not sure that this is ok. I added lattice as an argum
 
         if event_type < 4:  # Reorientation event
             self.lattice.reorient_particle(x, y, event_type)            
-        else:  # Migration event
-            self.lattice.move_particle(x, y)
+        else:  # Migration event or move with the flow
+            if event_type == 4:            
+                self.lattice.move_particle(x, y)
+            elif event_type == 5:
+                self.lattice.move_particle(x, y, True)
+            else:
+                raise ValueError("Eventtype not defined" )
 
 
     def run(self) -> Optional[Tuple[int, int, int]]:

@@ -44,6 +44,11 @@ class ParticleLattice:
         # Layer indices will map layer names to their indices
         self.layer_indices = {name: i for i, name in enumerate(self.ORIENTATION_LAYERS)}
 
+
+        # yarray for virtual flow
+        self.yarray = torch.arange(-(self.height-1)/2,(self.height-1)/2+1,1)[None,:,None]
+        self.yarray/=(self.height-1)/2 
+        
         # Initialize obstacles and sinks as zero tensors
         if obstacles is None:
             self.add_layer(torch.zeros((height, width), dtype=torch.bool), "obstacles")
@@ -55,6 +60,9 @@ class ParticleLattice:
         else:
             self.add_layer(sinks, "sinks")
 
+        # TO BE GENERALIZED (removed 5 but count the number of sinks in the lattice)
+        self.count_region = torch.zeros((5), dtype=torch.int) #5 because --> number of sinks directions + the sink in the center
+            
         # Reference to the particle, sinks and obstacles layers for easy access
         self.particles = self.griglia[: self.NUM_ORIENTATIONS]
         self.sinks = self.griglia[self.layer_indices["sinks"]]
@@ -267,7 +275,7 @@ class ParticleLattice:
         #self.griglia[:, y, x] = False  # Remove particle from all orientations
         #print('removed particle from index x=%d y=%d' %(x,y))
 
-    def add_particle_flux(self, number_of_particles, region):
+    def add_particle_flux(self, number_of_particles, region, orient): 
         """
         Add a number of particles randomly within a specified region.
 
@@ -275,17 +283,37 @@ class ParticleLattice:
         :type number_of_particles: int
         :param region: The region where particles are to be added, defined as (x_min, x_max, y_min, y_max).
         :type region: tuple
-        """
+        """        
         x_min, x_max, y_min, y_max = region
-        for _ in range(number_of_particles):
-            # Ensure that we add the particle in an empty spot
-            while True:
-                x = np.random.randint(x_min, x_max)
-                y = np.random.randint(y_min, y_max)
-                orientation = np.random.randint(0, self.num_layers)
-                if self.is_empty(x, y):
-                    self.add_particle(x, y, orientation)
-                    break
+
+        count_empty = 0
+        for xx in range(x_min,x_max):
+            for yy in range (y_min, y_max):
+                if self.is_empty(xx, yy):
+                    count_empty +=1
+                    
+        if count_empty < number_of_particles:
+            number_added = 0
+        else:
+                
+            for _ in range(number_of_particles):
+                # Ensure that we add the particle in an empty spot
+                while True:
+                    x = np.random.randint(x_min, x_max)
+                    y = np.random.randint(y_min, y_max)
+                    if orient == "random":
+                        orientation = np.random.randint(0, self.num_layers)
+                    else:
+                        orientation = self.layer_indices[orient]
+                        
+                    if self.is_empty(x, y):
+                        self.add_particle(x, y, orientation)
+                        break
+                    
+            number_added = number_of_particles
+        
+                
+        return number_added 
 
     def query_lattice_state(self):
         """
@@ -328,6 +356,24 @@ class ParticleLattice:
 
         return TM * v0
 
+
+    def compute_tf(self, v1):
+        """
+        Compute the migration transition rate tensor TM with periodic boundary conditions.
+        """
+        # Calculate empty cells (where no particle is present)
+        empty_cellspart = self.particles.sum(dim=0)
+        empty_cells = ~(empty_cellspart + self.obstacles).bool()
+        #empty_cells = ~self.griglia[:(self.NUM_ORIENTATIONS+1)].sum(dim=0).bool()
+
+        # Calculate potential move in the flow direction
+        # Right
+        TF = empty_cellspart * empty_cells.roll(shifts=-1, dims=1) * v1 * (1 - self.yarray*self.yarray)
+
+        return TF 
+
+
+    
     def compute_log_tr(self):
         """
         Compute the reorientation transition log rate tensor.
@@ -373,9 +419,15 @@ class ParticleLattice:
             TR_tensor[right_index] - TR_tensor[left_index],
         )
 
+        TR_tensor[left_index] += 0.5*self.obstacles.roll(shifts=+1, dims = 0)*(self.particles[up_index]+self.particles[down_index])
+        TR_tensor[right_index] += 0.5*self.obstacles.roll(shifts=+1, dims = 0)*(self.particles[up_index]+self.particles[down_index])
+
+        TR_tensor[left_index] += 0.5*self.obstacles.roll(shifts=-1, dims = 0)*(self.particles[up_index]+self.particles[down_index])
+        TR_tensor[right_index] += 0.5*self.obstacles.roll(shifts=-1, dims = 0)*(self.particles[up_index]+self.particles[down_index])
+        
         return TR_tensor
 
-    def compute_tr(self, g):
+    def compute_tr(self, g, v1):
         """
         Compute the reorientation transition rate tensor TR.
 
@@ -386,7 +438,10 @@ class ParticleLattice:
         occupied_cells = self.particles.sum(dim=0).bool()
 
         log_tr = self.compute_log_tr()
-        tr = torch.exp(g * log_tr) * occupied_cells
+
+        #tr = torch.exp(g * log_tr) * occupied_cells 
+        #modified: for virtual flow
+        tr = (torch.exp(g * log_tr) + 2*v1*torch.abs(self.yarray)/(self.height)* torch.cat((self.particles[[1,2,3,0],0:int((self.height-1)/2),:],self.particles[[3,0,1,2],int((self.height-1)/2):,:]), dim=1))* occupied_cells 
 
         #return tr
         return (tr * (torch.ones_like(self.particles) ^ self.particles )) #MODIFIED
@@ -469,7 +524,7 @@ class ParticleLattice:
 
         return orientation.item()
 
-    def move_particle(self, x: int, y: int) -> bool:
+    def move_particle(self, x: int, y: int, withflow = False) -> bool:
         """
         Move a particle at (x, y) with a given orientation to the new position determined by its current orientation.
         :param x: Current x-coordinate of the particle.
@@ -481,25 +536,44 @@ class ParticleLattice:
         # Check if the particle exists at the given location
         if self.is_empty(x, y):
             print(self)
+            if withflow:
+                print('withflow')
             raise ValueError("No particle found at the given location. x=%d, y=%d" %(x,y))
 
         # Get the current orientation of the particle at (x, y)
         orientation = self.get_particle_orientation(x, y)
 
         # Get the expected position of the particle
-        new_x, new_y = self.get_target_position(x, y, orientation)
+        if not withflow:
+            new_x, new_y = self.get_target_position(x, y, orientation)
+        else:
+            new_x, new_y = self.get_target_position(x, y, 3)
+        
 
         # Check if the new position is occupied or is an obstacle
         if self.is_obstacle(new_x, new_y) or not self.is_empty(new_x, new_y):
             warnings.warn(
                 "Cannot move particle to the target position as there is an obstacle or another particle there.",
                 stacklevel=2,
-            )
+            )            
             return False
 
         # Check if the new position is a sink, if so remove the particle
         if self.is_sink(new_x, new_y):
             self.remove_particle(x, y)
+            if new_y==0 and new_x<=self.width-1 and new_x>=0: #up sink
+                self.count_region[0]+=1
+            elif new_y==self.height-1 and new_x<=self.width-1 and new_x>=0: #down sink
+                self.count_region[1]+=1
+            elif new_x==0 and new_y>=0 and new_y<=self.height-1: #left sink
+                self.count_region[2]+=1
+            elif new_x==self.width-1 and new_y>=0 and new_y<=self.height-1: #right sink
+                self.count_region[3]+=1
+            elif new_x==(self.width-1)/2 and new_y==(self.height-1)/2: #center of the lattice
+                self.count_region[4]+=1 
+            else:
+                print('x=%d y=%d' %(new_x,new_y))
+                raise IndexError(f"You are removing particles outside the sinks")                
             return True
 
         # Move the particle
