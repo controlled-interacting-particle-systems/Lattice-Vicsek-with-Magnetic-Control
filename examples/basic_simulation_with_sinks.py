@@ -7,7 +7,7 @@ from examples.utils import *
 import numpy as np
 
 #chiara: added seed
-seed = 744545
+seed = 3179
 phi = 0
 torch.manual_seed(seed)
 np.random.seed(seed)
@@ -74,6 +74,9 @@ def main():
     event_map = dict(zip(event_codes, event_names))
 
     fileObject = open(f"data_withsinks/order_params_size{height}{width}_seed{seed}_phi{phi}_g{g}.dat", "w")
+    fileDensity_y = open(f"data_withsinks/density_y_size{height}{width}_seed{seed}_phi{phi}_g{g}.dat", "w")
+    fileVely_x = open(f"data_withsinks/meanvely_x_size{height}{width}_seed{seed}_phi{phi}_g{g}.dat", "w")
+    fileVely_y = open(f"data_withsinks/meanvely_y_size{height}{width}_seed{seed}_phi{phi}_g{g}.dat", "w")
     file_particles_in_sinks = open(f"data_withsinks/numparticles_in_sinks{height}{width}_seed{seed}_phi{phi}_g{g}.dat", "w")
     file_lattice = open(f"data_withsinks/lattice_saved_{height}{width}_seed{seed}_phi{phi}_g{g}.dat", "w")
 
@@ -104,6 +107,25 @@ def main():
             array_to_save = np.array([_,simulation.t, order_params[_]]) 
             np.savetxt(fileObject, array_to_save.reshape(1,3), fmt='%g', delimiter = ' ')
             fileObject.flush()
+            
+            density_y = simulation.lattice.compute_density_as_function_of_y()
+            arr_y = [_, simulation.t]
+            for j in range(len(density_y)):
+                arr_y.append(density_y[j])
+            array_to_save = np.array(arr_y)
+            np.savetxt(fileDensity_y, array_to_save.reshape(1,len(density_y)+2), fmt='%g', delimiter = ' ')
+            fileDensity_y.flush()
+
+            mean_vel_y = simulation.lattice.compute_meanvelocity_as_function_of_y()
+            array_to_savex = np.array(mean_vel_y[0])
+            array_to_savey = np.array(mean_vel_y[1])
+            np.savetxt(fileVely_x, array_to_savex.reshape(1,len(mean_vel_y[0])), fmt='%g', delimiter = ' ')
+            fileVely_x.flush()
+            np.savetxt(fileVely_y, array_to_savey.reshape(1,len(mean_vel_y[1])), fmt='%g', delimiter = ' ')
+            fileVely_y.flush()
+
+
+            
 
         if simulation.lattice.particles[:].sum().item() > 0:                        
             event = simulation.run()

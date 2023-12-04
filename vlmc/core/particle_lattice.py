@@ -633,11 +633,16 @@ class ParticleLattice:
             self.particles, dim=(1, 2)
         ).tolist()
 
+        density_y = (
+            self.compute_density_as_function_of_y()
+        )
+
         stats = {
             "number_of_particles": num_particles,
             "density": density,
             "order_parameter": order_parameter,
             "orientation_counts": orientation_counts,
+            "density_y": density_y,
             # Include other statistics as needed
         }
 
@@ -652,7 +657,7 @@ class ParticleLattice:
         """
         # Define unit vectors for each orientation
         orientation_vectors = torch.tensor(
-            [[0, 1], [0, -1], [-1, 0], [1, 0]], dtype=torch.float32
+            [[0, 1], [-1, 0], [0, -1], [1, 0]], dtype=torch.float32
         )
 
         # Initialize the sum of orientation vectors
@@ -664,7 +669,7 @@ class ParticleLattice:
                 #self.griglia[i].sum().item()
                 self.particles[i].sum().item()
             )  # Count number of particles with this orientation
-            orientation_vector_sum += num_particles * ori_vec
+            orientation_vector_sum += num_particles * ori_vec 
 
         # Calculate the average orientation vector
         total_particles = self.particles.sum().item()
@@ -677,3 +682,47 @@ class ParticleLattice:
         order_parameter = torch.norm(average_orientation_vector, p=2)
 
         return order_parameter.item()
+
+
+    def compute_density_as_function_of_y(self):
+        """
+        Compute the density of particles as a function of the y direction. --> rho(y)
+        
+        :return: rho(y)
+        :rtype: list of floats
+        """
+        rho_y = []
+        
+        for j in range(self.height):
+            #print(self.particles[:,j,:].sum().item())
+            rho_y.append(float(self.particles[:,j,:].sum().item()/(self.height * self.width)))
+            #rho_y.append(self.particles[:,j,:].sum().item())
+
+        check_numpart = 0
+        for j in range(len(rho_y)):
+            check_numpart += rho_y[j]*(self.height * self.width)
+        
+        if int(check_numpart) != self.particles[:].sum().item():
+            print('checknumpart = %d, part = %d' %(int(check_numpart*(self.width * self.height)), int(self.particles[:].sum().item())))
+            raise ValueError ('ERROR!!! The density of particles as a function of y is not working properly') 
+    
+        return rho_y
+
+    
+    def compute_meanvelocity_as_function_of_y(self):
+
+        vel_y = [[],[]]
+        
+        for j in range(self.height):            
+            vel_y[0].append(float(self.particles[3,j,:].sum().item() - self.particles[1,j,:].sum().item())/(self.width * self.height))
+            vel_y[1].append(float(-self.particles[0,j,:].sum().item() + self.particles[2,j,:].sum().item())/(self.width * self.height))
+    
+        return vel_y
+
+        
+        
+
+
+        
+
+    
