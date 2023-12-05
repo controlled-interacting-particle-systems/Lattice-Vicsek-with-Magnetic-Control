@@ -41,9 +41,9 @@ def main():
     magnetic_field = MagneticField()  # Add parameters if needed
 
     # Simulation parameters
-    g = 2.0  # Alignment sensitivity
+    g = 1.0  # Alignment sensitivity
     v0 = 100.0  # Base transition rate
-    v1 = 0.0 # flow rate 
+    v1 = 100.0 # flow rate 
     magnetic_field_interval = 10.0  # Time interval for magnetic field application
 
     # Initialize the Simulation
@@ -73,19 +73,19 @@ def main():
     event_codes = [0, 1, 2, 3, 4]
     event_map = dict(zip(event_codes, event_names))
 
-    fileObject = open(f"data_withsinks/order_params_size{height}{width}_seed{seed}_phi{phi}_g{g}.dat", "w")
-    fileDensity_y = open(f"data_withsinks/density_y_size{height}{width}_seed{seed}_phi{phi}_g{g}.dat", "w")
-    fileVely_x = open(f"data_withsinks/meanvely_x_size{height}{width}_seed{seed}_phi{phi}_g{g}.dat", "w")
-    fileVely_y = open(f"data_withsinks/meanvely_y_size{height}{width}_seed{seed}_phi{phi}_g{g}.dat", "w")
-    file_particles_in_sinks = open(f"data_withsinks/numparticles_in_sinks{height}{width}_seed{seed}_phi{phi}_g{g}.dat", "w")
-    file_lattice = open(f"data_withsinks/lattice_saved_{height}{width}_seed{seed}_phi{phi}_g{g}.dat", "w")
+    fileObject = open(f"data_withsinks/order_params_size{height}{width}_seed{seed}_v0{v0}_v1{v1}_g{g}.dat", "w")
+    fileDensity_y = open(f"data_withsinks/density_y_size{height}{width}_seed{seed}_v0{v0}_v1{v1}_g{g}.dat", "w")
+    fileVely_x = open(f"data_withsinks/meanvely_x_size{height}{width}_seed{seed}_v0{v0}_v1{v1}_g{g}.dat", "w")
+    fileVely_y = open(f"data_withsinks/meanvely_y_size{height}{width}_seed{seed}_v0{v0}_v1{v1}_g{g}.dat", "w")
+    file_particles_in_sinks = open(f"data_withsinks/numparticles_in_sinks{height}{width}_seed{seed}_v0{v0}_v1{v1}__g{g}.dat", "w")
+    file_lattice = open(f"data_withsinks/lattice_saved_{height}{width}_seed{seed}_v0{v0}_v1{v1}_g{g}.dat", "w")
 
 
 
     print ('obstacles == ' , simulation.lattice.obstacles.sum().sum())
     for _ in tqdm(range(n_steps)):
         
-        if _ %1e3==0: #save quantities
+        if _ %100==0: #save quantities
             array_to_save = np.array([_, simulation.lattice.particles[:].sum().sum(), simulation.lattice.count_region[0],simulation.lattice.count_region[1], simulation.lattice.count_region[2], simulation.lattice.count_region[3], simulation.lattice.count_region[4]])
             np.savetxt(file_particles_in_sinks, array_to_save.reshape(1,7), fmt='%d', delimiter = ' ')            
             file_particles_in_sinks.flush()
@@ -141,10 +141,10 @@ def main():
 
         if simulation.lattice.particles[:].sum().item() < N0:
         #if scra < phi*dt: #for flux added independent of number of particles in the lattice. 
-            #region
+            # define the region
             #if squared lattice
             region = [[2,width-2,1,2], [2,width-2,height-2,height-1], [1,2,2,height-2], [width-2,width-1,2,height-2]]
-            #region = [[1,2,1,height-1]]
+            # # region = [[1,2,1,height-1]]
             number_added = 0
             #selected_index = np.random.randint(0,4) for square lattice
             selected_index = 2

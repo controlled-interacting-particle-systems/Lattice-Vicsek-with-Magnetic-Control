@@ -695,15 +695,15 @@ class ParticleLattice:
         
         for j in range(self.height):
             #print(self.particles[:,j,:].sum().item())
-            rho_y.append(float(self.particles[:,j,:].sum().item()/(self.height * self.width)))
+            rho_y.append(self.particles[:,j,:].sum().item())
             #rho_y.append(self.particles[:,j,:].sum().item())
 
         check_numpart = 0
         for j in range(len(rho_y)):
-            check_numpart += rho_y[j]*(self.height * self.width)
+            check_numpart += rho_y[j]
         
         if int(check_numpart) != self.particles[:].sum().item():
-            print('checknumpart = %d, part = %d' %(int(check_numpart*(self.width * self.height)), int(self.particles[:].sum().item())))
+            print('checknumpart = %d, part = %d' %(check_numpart,self.particles[:].sum().item()))
             raise ValueError ('ERROR!!! The density of particles as a function of y is not working properly') 
     
         return rho_y
@@ -714,8 +714,8 @@ class ParticleLattice:
         vel_y = [[],[]]
         
         for j in range(self.height):            
-            vel_y[0].append(float(self.particles[3,j,:].sum().item() - self.particles[1,j,:].sum().item())/(self.width * self.height))
-            vel_y[1].append(float(-self.particles[0,j,:].sum().item() + self.particles[2,j,:].sum().item())/(self.width * self.height))
+            vel_y[0].append(self.particles[3,j,:].sum().item() - self.particles[1,j,:].sum().item())
+            vel_y[1].append(-self.particles[0,j,:].sum().item() + self.particles[2,j,:].sum().item())
     
         return vel_y
 
