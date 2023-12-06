@@ -1,7 +1,7 @@
 import torch
-from vlmc.core.particle_lattice import ParticleLattice
-from vlmc.core.magnetic_field import MagneticField
-from vlmc.core.simulation import Simulation
+from lvmc.core.particle_lattice import ParticleLattice
+from lvmc.core.magnetic_field import MagneticField
+from lvmc.core.simulation import Simulation
 from tqdm import tqdm
 from examples.utils import *
 import numpy as np
