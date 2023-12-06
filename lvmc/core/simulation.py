@@ -62,7 +62,9 @@ class Simulation:
         rates_flat: torch.Tensor = self.rates.view(-1)
         total_rate: float = rates_flat.sum().item()
         if total_rate == 0:
-            return None
+            raise ValueError(
+                "Total rate must be positive to sample from Multinomial distribution."
+            )
 
         chosen_index: int = torch.multinomial(rates_flat / total_rate, 1).item()
 
