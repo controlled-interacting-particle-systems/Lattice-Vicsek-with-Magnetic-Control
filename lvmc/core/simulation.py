@@ -1,8 +1,8 @@
 import torch
 import numpy as np
 from typing import Optional, Tuple
-from vlmc.core.particle_lattice import ParticleLattice
-from vlmc.core.magnetic_field import MagneticField
+from lvmc.core.particle_lattice import ParticleLattice
+from lvmc.core.magnetic_field import MagneticField
 
 
 class Simulation:
