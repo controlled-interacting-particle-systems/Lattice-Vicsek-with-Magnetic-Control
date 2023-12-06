@@ -1,2 +1,2 @@
-from vlmc.core.simulation import Simulation
+from lvmc.core.simulation import Simulation
 

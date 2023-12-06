@@ -1,5 +1,5 @@
 import pytest
-from vlmc.core.particle_lattice import ParticleLattice
+from lvmc.core.particle_lattice import ParticleLattice
 import torch
 import numpy as np
 
