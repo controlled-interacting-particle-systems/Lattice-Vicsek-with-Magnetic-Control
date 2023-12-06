@@ -66,7 +66,7 @@ class Simulation:
                 "Total rate must be positive to sample from Multinomial distribution."
             )
 
-        chosen_index: int = torch.multinomial(rates_flat / total_rate, 1).item()
+        chosen_index: int = torch.multinomial(rates_flat, 1).item()
 
         # Convert the flat index back into 3D index
         # convert the flat index back into 3D index using numpy.unravel_index because torch.unravel_index is not implemented yet
