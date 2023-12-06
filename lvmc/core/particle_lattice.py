@@ -231,6 +231,10 @@ class ParticleLattice:
         if self.is_empty(x, y) and not self.is_obstacle(x, y):
             self.lattice[orientation, y, x] = True
         else:
+            # to help with debugging, we can print the lattice and the position of the particle
+            print("lattice state when encountering error:")
+            print(self)
+            print(f"Position of the particle: ({x}, {y})")
             raise ValueError("Cannot add particle, cell is occupied or is an obstacle.")
 
     def remove_particle(self, x, y):
@@ -444,6 +448,9 @@ class ParticleLattice:
         """
         # If no particle is found at the given location, raise a value error
         if self.is_empty(x, y):
+            # to help with debugging, we can print the lattice and the position of the particle
+            print(self)
+            print(f"Position of the particle: ({x}, {y})")
             raise ValueError("No particle found at the given location.")
 
         # Get the orientation of the particle
