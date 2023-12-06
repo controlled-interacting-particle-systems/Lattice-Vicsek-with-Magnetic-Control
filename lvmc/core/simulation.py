@@ -84,9 +84,9 @@ class Simulation:
         x, y, event_type = event
 
         if event_type < 4:  # Reorientation event
-            self.lattice.reorient_particle(x, y, event_type)
+            return self.lattice.reorient_particle(x, y, event_type)
         else:  # Migration event
-            self.lattice.move_particle(x, y)
+            return self.lattice.move_particle(x, y)
 
     def run(self) -> Optional[Tuple[int, int, int]]:
         """
