@@ -11,7 +11,7 @@ def main():
     # Parameters for ParticleLattice
     height, width = 10, 10
     obstacle_topology, sink_topology = "none", "central"
-    obstacle_walls, sink_walls = ["top", "left","bottom", "right"], None
+    obstacle_walls, sink_walls = ["top", "left", "bottom", "right"], None
     obstacles, sinks = generate_lattice_topology(
         height, width, obstacle_topology, sink_topology, obstacle_walls, sink_walls
     )
@@ -39,9 +39,9 @@ def main():
     # Initialize the Simulation
     simulation = Simulation(g, v0, magnetic_field_interval, **lattice_params)
 
-    n_steps = int(10000) # Number of steps to run the simulation for
+    n_steps = int(10000)  # Number of steps to run the simulation for
     order_params = np.zeros(n_steps)
-    
+
     print("Initial lattice")
     print(lattice)
     print(f"Initial order parameter: {simulation.lattice.compute_order_parameter()}")
@@ -57,7 +57,7 @@ def main():
     event_codes = [0, 1, 2, 3, 4]
     event_map = dict(zip(event_codes, event_names))
 
-    for _ in tqdm(range(n_steps)):  
+    for _ in tqdm(range(n_steps)):
         event = simulation.run()
         order_params[_] = simulation.lattice.compute_order_parameter()
         # print(f"Event occurred: particle at {event[0], event[1]} {event_names[event[2]]}, at time {np.round(simulation.t}, 2)")
@@ -65,6 +65,7 @@ def main():
     print("Final lattice")
     print(lattice)
     print(f"Final order parameter: {simulation.lattice.compute_order_parameter()}")
+
 
 if __name__ == "__main__":
     main()
