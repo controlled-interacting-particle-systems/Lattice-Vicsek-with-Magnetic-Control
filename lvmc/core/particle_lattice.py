@@ -373,9 +373,9 @@ class ParticleLattice:
         occupied_cells = self.particles.sum(dim=0).bool()
 
         log_tr = self.compute_log_tr()
-        tr = torch.exp(g * log_tr) * occupied_cells
+        tr = torch.exp(g * log_tr) * occupied_cells 
 
-        return tr
+        return tr * (torch.ones_like(self.particles) ^ self.particles)
 
     def get_target_position(self, x: int, y: int, orientation: int) -> tuple:
         """
