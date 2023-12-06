@@ -16,7 +16,7 @@ class Simulation:
         :param lattice_params: Parameters for the lattice.
         """
         self.lattice = ParticleLattice(**lattice_params)
-        self.magnetic_field = MagneticField(0)
+        self.magnetic_field = MagneticField()
         self.g = g
         self.v0 = v0
         self.magnetic_field_interval = magnetic_field_interval
