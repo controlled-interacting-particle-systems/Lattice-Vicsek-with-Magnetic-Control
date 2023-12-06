@@ -110,10 +110,10 @@ class Simulation: #CHIARA: not sure that this is ok. I added lattice as an argum
 
         :return: An Optional tuple (event_type, x, y) representing the event, or None.
         """
+        self.apply_magnetic_field_if_needed()
         delta_t = self.compute_and_update_time()
-        self.apply_magnetic_field_if_needed(delta_t)
         event = self.choose_and_perform_event()
-        self.update_simulation_state(delta_t)
+        self.update_rates()
         return event
 
     def compute_and_update_time(self) -> float:
@@ -127,15 +127,16 @@ class Simulation: #CHIARA: not sure that this is ok. I added lattice as an argum
         self.time_since_last_magnetic_field += delta_t
         return delta_t
 
-    def apply_magnetic_field_if_needed(self, delta_t: float):
+    def apply_magnetic_field_if_needed(self):
         """
         Apply the magnetic field to the lattice if the interval has been reached.
 
         :param delta_t: The time delta for the next event.
         """
-        if self.time_since_last_magnetic_field >= self.magnetic_field_interval:
+        if self.test_apply_magnetic_field():            
             self.magnetic_field.apply(self.lattice)
             self.time_since_last_magnetic_field = 0.0
+            self.update_rates()
 
     def choose_and_perform_event(self) -> Optional[Tuple[int, int, int]]:
         """
@@ -155,3 +156,6 @@ class Simulation: #CHIARA: not sure that this is ok. I added lattice as an argum
         """
         self.update_rates()
         self.t_magnetic_field -= delta_t
+
+    def test_apply_magnetic_field(self) -> bool:        
+        return (bool(self.time_since_last_magnetic_field >= self.magnetic_field_interval))
