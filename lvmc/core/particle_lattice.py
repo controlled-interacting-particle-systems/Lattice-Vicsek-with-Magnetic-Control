@@ -221,16 +221,13 @@ class ParticleLattice:
         """
         return not self.particles[:, y, x].any()
 
-    def add_particle(self, x, y, orientation):
+    def add_particle(self, x: int, y: int, orientation: int) -> None:
         """
         Add a particle with a specific orientation at (x, y).
 
         :param x: x-coordinate of the lattice.
-        :type x: int
         :param y: y-coordinate of the lattice.
-        :type y: int
         :param orientation: Orientation of the particle.
-        :type orientation: int
         """
         if self.is_empty(x, y) and not self.is_obstacle(x, y):
             self.lattice[orientation, y, x] = True
