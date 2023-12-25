@@ -129,12 +129,11 @@ class ParticleLattice:
         # Increment the number of layers
         self.num_layers += 1
 
-    def initialize_lattice(self, density):
+    def initialize_lattice(self, density: float) -> None:
         """
         Initialize the lattice with particles at a given density.
 
         :param density: Density of particles to be initialized.
-        :type density: float
         """
         num_cells = self.width * self.height
         num_particles = int(density * num_cells)
