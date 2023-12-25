@@ -261,25 +261,7 @@ class ParticleLattice:
             )
         self.lattice[:, y, x] = False  # Remove particle from all orientations
 
-    def add_particle_flux(self, number_of_particles, region):
-        """
-        Add a number of particles randomly within a specified region.
 
-        :param number_of_particles: Number of particles to add.
-        :type number_of_particles: int
-        :param region: The region where particles are to be added, defined as (x_min, x_max, y_min, y_max).
-        :type region: tuple
-        """
-        x_min, x_max, y_min, y_max = region
-        for _ in range(number_of_particles):
-            # Ensure that we add the particle in an empty spot
-            while True:
-                x = np.random.randint(x_min, x_max)
-                y = np.random.randint(y_min, y_max)
-                orientation = np.random.randint(0, self.num_layers)
-                if self.is_empty(x, y):
-                    self.add_particle(x, y, orientation)
-                    break
 
     def query_lattice_state(self):
         """
