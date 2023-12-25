@@ -261,14 +261,11 @@ class ParticleLattice:
             )
         self.lattice[:, y, x] = False  # Remove particle from all orientations
 
-
-
-    def query_lattice_state(self):
+    def query_lattice_state(self) -> torch.Tensor:
         """
         Query the current state of the lattice.
 
         :return: The state of the lattice.
-        :rtype: torch.Tensor
         """
         return self.lattice
 
