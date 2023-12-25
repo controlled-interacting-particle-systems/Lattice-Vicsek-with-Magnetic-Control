@@ -401,11 +401,8 @@ class ParticleLattice:
         Check if a cell is a sink.
 
         :param x: x-coordinate of the lattice.
-        :type x: int
         :param y: y-coordinate of the lattice.
-        :type y: int
         :return: True if the cell is a sink, False otherwise.
-        :rtype: bool
         """
         return (
             "sinks" in self.layer_indices
@@ -417,11 +414,8 @@ class ParticleLattice:
         Get the orientation of a particle at (x, y).
 
         :param x: x-coordinate of the particle.
-        :type x: int
         :param y: y-coordinate of the particle.
-        :type y: int
         :return: The orientation of the particle.
-        :rtype: int
         :raises ValueError: If no particle is found at the given location.
         """
         # If no particle is found at the given location, raise a value error
