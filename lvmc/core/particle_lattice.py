@@ -238,14 +238,12 @@ class ParticleLattice:
             print(f"Position of the particle: ({x}, {y})")
             raise ValueError("Cannot add particle, cell is occupied or is an obstacle.")
 
-    def remove_particle(self, x, y):
+    def remove_particle(self, x: int, y: int) -> None:
         """
         Remove a particle from a specific node in the lattice.
 
         :param x: x-coordinate of the node.
-        :type x: int
         :param y: y-coordinate of the node.
-        :type y: int
         """
         if self.is_empty(x, y):
             warnings.warn(
