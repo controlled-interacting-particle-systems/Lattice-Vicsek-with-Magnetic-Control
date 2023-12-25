@@ -269,7 +269,7 @@ class ParticleLattice:
         """
         return self.lattice
 
-    def compute_tm(self, v0):
+    def compute_tm(self, v0: float = 1.0) -> None:
         """
         Compute the migration transition rate tensor TM with periodic boundary conditions.
         """
