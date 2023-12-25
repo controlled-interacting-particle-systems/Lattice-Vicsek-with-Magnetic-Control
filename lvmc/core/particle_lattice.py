@@ -363,7 +363,6 @@ class ParticleLattice:
         :param y: Current y-coordinate of the particle.
         :param orientation: Current orientation of the particle which determines the direction of movement.
         :return: The expected position of the particle.
-        :rtype: tuple
         """
         if orientation < 0 or orientation >= ParticleLattice.NUM_ORIENTATIONS:
             raise ValueError("Invalid orientation index.")
