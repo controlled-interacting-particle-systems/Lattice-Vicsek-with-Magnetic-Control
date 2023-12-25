@@ -211,16 +211,13 @@ class ParticleLattice:
         else:
             raise ValueError("Position is outside the lattice bounds.")
 
-    def is_empty(self, x, y):
+    def is_empty(self, x: int, y: int) -> bool:
         """
         Check if a cell is empty.
 
         :param x: x-coordinate of the lattice.
-        :type x: int
         :param y: y-coordinate of the lattice.
-        :type y: int
         :return: True if the no particle is present at the cell, False otherwise.
-        :rtype: bool
         """
         return not self.particles[:, y, x].any()
 
