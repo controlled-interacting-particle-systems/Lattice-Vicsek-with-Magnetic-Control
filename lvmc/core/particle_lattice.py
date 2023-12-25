@@ -299,7 +299,7 @@ class ParticleLattice:
 
         return TM * v0
 
-    def compute_log_tr(self):
+    def compute_log_tr(self) -> None:
         """
         Compute the reorientation transition log rate tensor.
 
