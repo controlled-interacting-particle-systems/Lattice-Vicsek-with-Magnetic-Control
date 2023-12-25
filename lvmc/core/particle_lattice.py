@@ -355,7 +355,7 @@ class ParticleLattice:
 
         return tr * (torch.ones_like(self.particles) ^ self.particles)
 
-    def get_target_position(self, x: int, y: int, orientation: int) -> tuple:
+    def _get_target_position(self, x: int, y: int, orientation: int) -> tuple:
         """
         Get the expected position of a particle at (x, y) with a given orientation.
 
@@ -446,7 +446,7 @@ class ParticleLattice:
         orientation = self.get_particle_orientation(x, y)
 
         # Get the expected position of the particle
-        new_x, new_y = self.get_target_position(x, y, orientation)
+        new_x, new_y = self._get_target_position(x, y, orientation)
 
         # Check if the new position is occupied or is an obstacle
         if self.is_obstacle(new_x, new_y) or not self.is_empty(new_x, new_y):
