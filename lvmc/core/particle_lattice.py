@@ -63,14 +63,22 @@ class ParticleLattice:
         # Initialize the lattice with particles at a given density.
         self.initialize_lattice(density)
 
-    def _create_index_to_symbol_mapping(self):
+    def _create_index_to_symbol_mapping(self) -> dict:
+        """
+        Create a mapping between orientation indices and symbols for visualization.
+        :return: A dictionary mapping orientation indices to symbols.
+        """
         orientation_symbols = {"up": "↑", "down": "↓", "left": "←", "right": "→"}
         return {
             self.layer_indices[name]: symbol
             for name, symbol in orientation_symbols.items()
         }
 
-    def __str__(self):
+    def __str__(self) -> str:
+        """
+        String representation of the lattice.
+        :return: A string representation of the lattice.
+        """
         index_to_symbol = self._create_index_to_symbol_mapping()
         obstacle_symbol = "■"  # Symbol for obstacles
         sink_symbol = "▼"  # Symbol for sinks
