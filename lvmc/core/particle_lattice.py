@@ -106,7 +106,7 @@ class ParticleLattice:
 
         return lattice_str
 
-    def add_layer(self, layer: torch.Tensor, layer_name: str):
+    def add_layer(self, layer: torch.Tensor, layer_name: str) -> None:
         """
         Add a new layer to the lattice.
         :param layer: A binary matrix indicating the special cells for the new layer.
@@ -153,7 +153,7 @@ class ParticleLattice:
             if not self.is_obstacle(x, y):
                 self.add_particle(x, y, ori)
 
-    def set_obstacle(self, x: int, y: int):
+    def set_obstacle(self, x: int, y: int) -> None:
         """
         Set an obstacle at the specified position in the lattice,
         provided the cell is empty and not already an obstacle or a sink.
