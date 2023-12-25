@@ -340,7 +340,7 @@ class ParticleLattice:
 
         return TR_tensor
 
-    def compute_tr(self, g):
+    def compute_tr(self, g: float = 1.0) -> None:
         """
         Compute the reorientation transition rate tensor TR.
 
