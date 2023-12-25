@@ -185,7 +185,7 @@ class ParticleLattice:
         else:
             raise ValueError("Position is outside the lattice bounds.")
 
-    def set_sink(self, x: int, y: int):
+    def set_sink(self, x: int, y: int) -> None:
         """
         Set a sink at the specified position in the lattice,
         provided the cell is empty and not already an obstacle or a sink.
