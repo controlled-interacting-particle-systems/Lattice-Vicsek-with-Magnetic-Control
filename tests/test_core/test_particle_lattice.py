@@ -186,45 +186,6 @@ def test_query_lattice_state():
     assert lattice_state.size() == (lattice.num_layers, lattice.height, lattice.width)
     assert torch.sum(lattice_state) == torch.sum(lattice.lattice)
 
-
-def test_get_statistics():
-    lattice = ParticleLattice(width=10, height=10)
-    lattice.initialize_lattice(density=0.5)  # Initialize with a density of 0.5
-
-    stats = lattice.get_statistics()
-
-    assert "number_of_particles" in stats
-    assert "density" in stats
-    assert "order_parameter" in stats
-    assert "orientation_counts" in stats
-    assert stats["density"] == pytest.approx(0.5)
-    assert stats["number_of_particles"] == pytest.approx(100 * 0.5)
-    assert (
-        0 <= stats["order_parameter"] <= 1
-    )  # Order parameter should be between 0 and 1
-
-    # Check if orientation counts is a list with four elements (one for each orientation)
-    assert isinstance(stats["orientation_counts"], list)
-    assert len(stats["orientation_counts"]) == ParticleLattice.NUM_ORIENTATIONS
-    # Check if the sum of the orientation counts equals the total number of particles
-    assert sum(stats["orientation_counts"]) == stats["number_of_particles"]
-
-
-def test_compute_order_parameter():
-    # Create a ParticleLattice instance
-    lattice = ParticleLattice(width=10, height=10)
-
-    # Manually set a known lattice configuration that would result in a non-zero order parameter
-    # For simplicity, let's say all particles are oriented up
-    lattice.lattice[0] = torch.ones((10, 10), dtype=torch.bool)
-
-    # Call the compute_order_parameter method
-    order_parameter = lattice.compute_order_parameter()
-
-    # Since all particles are aligned, the order parameter should be 1
-    assert order_parameter == pytest.approx(1.0)
-
-
 def test_compute_tm():
     lattice = ParticleLattice(width=10, height=10)
     v0 = 1.0
@@ -358,19 +319,19 @@ def test_get_target_position():
 
     # Check if the target position is correct for each orientation
     # 1. Up
-    assert lattice.get_target_position(x, y, lattice.layer_indices["up"]) == (x, y - 1)
+    assert lattice._get_target_position(x, y, lattice.layer_indices["up"]) == (x, y - 1)
     # 2. Down
-    assert lattice.get_target_position(x, y, lattice.layer_indices["down"]) == (
+    assert lattice._get_target_position(x, y, lattice.layer_indices["down"]) == (
         x,
         y + 1,
     )
     # 3. Left
-    assert lattice.get_target_position(x, y, lattice.layer_indices["left"]) == (
+    assert lattice._get_target_position(x, y, lattice.layer_indices["left"]) == (
         x - 1,
         y,
     )
     # 4. Right
-    assert lattice.get_target_position(x, y, lattice.layer_indices["right"]) == (
+    assert lattice._get_target_position(x, y, lattice.layer_indices["right"]) == (
         x + 1,
         y,
     )
@@ -533,7 +494,7 @@ def test_move_particle_on_sink():
     # If a particle is on the sink, it should return the orientation of the particle
     orientation = np.random.randint(0, 4)
     lattice.add_particle(x, y, orientation)
-    x_new, y_new = lattice.get_target_position(x, y, orientation)
+    x_new, y_new = lattice._get_target_position(x, y, orientation)
 
     lattice.move_particle(x, y)
     assert lattice.is_empty(x, y)
