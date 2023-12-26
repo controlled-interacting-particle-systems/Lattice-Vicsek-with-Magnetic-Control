@@ -432,7 +432,6 @@ class ParticleLattice:
         :param x: Current x-coordinate of the particle.
         :param y: Current y-coordinate of the particle.
         :return: True if the particle was moved successfully, False otherwise.
-        :rtype: bool
         :raises ValueError: If no particle is found at the given location.
         """
         # Check if the particle exists at the given location
