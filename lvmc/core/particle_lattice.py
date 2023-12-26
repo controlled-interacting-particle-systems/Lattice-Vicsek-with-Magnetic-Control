@@ -384,11 +384,8 @@ class ParticleLattice:
         Check if a cell is an obstacle.
 
         :param x: x-coordinate of the lattice.
-        :type x: int
         :param y: y-coordinate of the lattice.
-        :type y: int
         :return: True if the cell is an obstacle, False otherwise.
-        :rtype: bool
         """
         return (
             "obstacles" in self.layer_indices
