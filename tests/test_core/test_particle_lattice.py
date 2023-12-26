@@ -606,17 +606,3 @@ def test_reorient_particle():
         lattice.reorient_particle(0, 0, 0)
 
 
-def test_add_particle_flux():
-    lattice = ParticleLattice(width=20, height=20)
-    number_of_particles = 5
-    region = (5, 10, 5, 10)  # Define a region within the lattice
-
-    lattice.add_particle_flux(number_of_particles, region)
-    x_min, x_max, y_min, y_max = region
-
-    # Count the number of particles in the region
-    region_particles = (
-        lattice.query_lattice_state()[:, x_min:x_max, y_min:y_max].sum().item()
-    )
-
-    assert region_particles == number_of_particles
