@@ -119,3 +119,16 @@ def generate_lattice_topology(
     sinks = torch.logical_and(sinks, torch.logical_not(obstacles))
 
     return obstacles, sinks
+
+
+# create a mapping between the event codes and the event names for printing purposes
+# 0 is up 1 is left 2 is down 3 is right 4 is migrate
+event_names = [
+    "turned up",
+    "turned left",
+    "turned down",
+    "turned right",
+    "migrated to the next cell",
+]
+event_codes = [0, 1, 2, 3, 4]
+event_map = dict(zip(event_codes, event_names))
