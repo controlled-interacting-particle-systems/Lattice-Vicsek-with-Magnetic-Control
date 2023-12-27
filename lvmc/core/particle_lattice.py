@@ -232,7 +232,9 @@ class ParticleLattice:
         if self.is_empty(x, y) and not self.is_obstacle(x, y):
             self.lattice[orientation, y, x] = True
         else:
-            raise ValueError(f"Cannot add particle, cell ({x},{y}) is occupied or is an obstacle.")
+            raise ValueError(
+                f"Cannot add particle, cell ({x},{y}) is occupied or is an obstacle."
+            )
 
     def remove_particle(self, x: int, y: int) -> None:
         """
