@@ -75,9 +75,6 @@ class Simulation:
 
         # check if the position is empty and raise a value error if it is
         if self.lattice.is_empty(x, y):
-            print(self.lattice)
-            # print the corresponding rates
-            print(f"{self.rates[event_type, y, x]=}")
             raise ValueError(f"Position ({x}, {y}) is empty.")
 
         return (x.item(), y.item(), event_type.item())
