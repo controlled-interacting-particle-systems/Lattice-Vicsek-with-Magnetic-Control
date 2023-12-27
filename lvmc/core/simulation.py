@@ -6,7 +6,7 @@ from lvmc.core.magnetic_field import MagneticField
 
 
 class Simulation:
-    def __init__(self, g, v0, magnetic_field_interval, **lattice_params):
+    def __init__(self, g, v0, **lattice_params):
         """
         Initialize the simulation with a given lattice, magnetic field, and parameters.
 
@@ -19,17 +19,14 @@ class Simulation:
         self.magnetic_field = MagneticField()
         self.g = g
         self.v0 = v0
-        self.magnetic_field_interval = magnetic_field_interval
-        num_event_types = self.lattice.NUM_ORIENTATIONS + 1
+        self.num_event_types = self.lattice.NUM_ORIENTATIONS + 1
         self.rates = torch.zeros(
-            (num_event_types, self.lattice.height, self.lattice.width),
+            (self.num_event_types, self.lattice.height, self.lattice.width),
             dtype=torch.float32,
         )
-        self.time_since_last_magnetic_field = 0.0
         self.update_rates()
-        # Initialize time and time till next magnetic field application
+        # Initialize time
         self.t = 0.0
-        self.t_magnetic_field = self.magnetic_field_interval
 
     def update_rates(self):
         """
@@ -87,7 +84,7 @@ class Simulation:
         """
         x, y, event_type = event
 
-        if event_type < 4:  # Reorientation event
+        if event_type < self.num_event_types - 1:  # Reorientation event
             return self.lattice.reorient_particle(x, y, event_type)
         else:  # Migration event
             return self.lattice.move_particle(x, y)
@@ -98,48 +95,9 @@ class Simulation:
 
         :return: An Optional tuple (event_type, x, y) representing the event, or None.
         """
-        delta_t = self.compute_and_update_time()
-        self.apply_magnetic_field_if_needed(delta_t)
-        event = self.choose_and_perform_event()
-        self.update_simulation_state(delta_t)
-        return event
-
-    def compute_and_update_time(self) -> float:
-        """
-        Compute the time until the next event and update the simulation time.
-
-        :return: The time delta for the next event.
-        """
         delta_t = self.next_event_time()
         self.t += delta_t
-        self.time_since_last_magnetic_field += delta_t
-        return delta_t
-
-    def apply_magnetic_field_if_needed(self, delta_t: float):
-        """
-        Apply the magnetic field to the lattice if the interval has been reached.
-
-        :param delta_t: The time delta for the next event.
-        """
-        if self.time_since_last_magnetic_field >= self.magnetic_field_interval:
-            self.magnetic_field.apply(self.lattice)
-            self.time_since_last_magnetic_field = 0.0
-
-    def choose_and_perform_event(self) -> Optional[Tuple[int, int, int]]:
-        """
-        Choose and perform an event.
-
-        :return: An Optional tuple representing the event, or None.
-        """
         event = self.choose_event()
         self.perform_event(event)
-        return event
-
-    def update_simulation_state(self, delta_t: float):
-        """
-        Update the rates and the time till the next magnetic field application.
-
-        :param delta_t: The time delta for the next event.
-        """
         self.update_rates()
-        self.t_magnetic_field -= delta_t
+        return event
