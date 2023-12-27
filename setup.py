@@ -11,6 +11,6 @@ setup(
         "torch",
     ],
     author="EL KHIYATI Zakarya",
-    author_email="elkhiyati.zakarya@gmail.com",
+    author_email="zakaryaelkhiyati@gmail.com",
     description="A package for simulating Vicsek-like particles on a 2D lattice with magnetic fields",
 )
