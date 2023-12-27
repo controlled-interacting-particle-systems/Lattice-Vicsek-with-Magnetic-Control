@@ -1,13 +1,14 @@
 from setuptools import setup, find_packages
 
 setup(
-    name="particle_lattice",
+    name="lvmc",
     version="0.1",
     packages=find_packages(),
     install_requires=[
         "numpy",
         "matplotlib",
         "tqdm",
+        "torch",
     ],
     author="EL KHIYATI Zakarya",
     author_email="elkhiyati.zakarya@gmail.com",
