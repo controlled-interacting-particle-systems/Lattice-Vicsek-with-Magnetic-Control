@@ -40,11 +40,11 @@ def main():
     simulation = Simulation(g, v0, magnetic_field_interval, **lattice_params)
 
     n_steps = int(10000)  # Number of steps to run the simulation for
-    order_params = np.zeros(n_steps)
+
 
     print("Initial lattice")
     print(lattice)
-    print(f"Initial order parameter: {simulation.lattice.compute_order_parameter()}")
+    
     # create a mapping between the event codes and the event names for printing purposes
     # 0 is up 1 is left 2 is down 3 is right 4 is migrate
     event_names = [
@@ -59,13 +59,9 @@ def main():
 
     for _ in tqdm(range(n_steps)):
         event = simulation.run()
-        order_params[_] = simulation.lattice.compute_order_parameter()
-        # print(f"Event occurred: particle at {event[0], event[1]} {event_names[event[2]]}, at time {np.round(simulation.t}, 2)")
 
     print("Final lattice")
     print(lattice)
-    print(f"Final order parameter: {simulation.lattice.compute_order_parameter()}")
-
 
 if __name__ == "__main__":
     main()
