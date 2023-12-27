@@ -186,6 +186,7 @@ def test_query_lattice_state():
     assert lattice_state.size() == (lattice.num_layers, lattice.height, lattice.width)
     assert torch.sum(lattice_state) == torch.sum(lattice.lattice)
 
+
 def test_compute_tm():
     lattice = ParticleLattice(width=10, height=10)
     v0 = 1.0
@@ -565,5 +566,3 @@ def test_reorient_particle():
     # attempt to reorient a non-existent particle
     with pytest.raises(ValueError):
         lattice.reorient_particle(0, 0, 0)
-
-
