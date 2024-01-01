@@ -483,3 +483,13 @@ class ParticleLattice:
         self.add_particle(x, y, new_orientation)
 
         return True
+
+    def get_params(self) -> dict:
+        """
+        Get the parameters of the lattice.
+        :return: A dictionary of the lattice parameters.
+        """
+        return {
+            "width": self.width,
+            "height": self.height,
+        }
