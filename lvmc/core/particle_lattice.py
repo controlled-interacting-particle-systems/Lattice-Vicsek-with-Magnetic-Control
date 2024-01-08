@@ -505,3 +505,20 @@ class ParticleLattice:
             "width": self.width,
             "height": self.height,
         }
+    def set_obstacles(self, obstacles: torch.Tensor) -> None:
+        """
+        Set the obstacles for the lattice.
+        :param obstacles: A binary matrix indicating the obstacle cells.
+        """
+        if obstacles.shape != (self.height, self.width):
+            raise ValueError("Obstacles tensor must match the lattice dimensions.")
+        self.obstacles = obstacles
+
+    def set_sinks(self, sinks: torch.Tensor) -> None:
+        """
+        Set the sinks for the lattice.
+        :param sinks: A binary matrix indicating the sink cells.
+        """
+        if sinks.shape != (self.height, self.width):
+            raise ValueError("Sinks tensor must match the lattice dimensions.")
+        self.sinks = sinks
