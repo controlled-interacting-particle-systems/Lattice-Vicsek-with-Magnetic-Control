@@ -62,10 +62,12 @@ class ParticleLattice:
         Create a mapping between orientation indices and symbols for visualization.
         :return: A dictionary mapping orientation indices to symbols.
         """
-        orientation_symbols = {"up": "↑", "down": "↓", "left": "←", "right": "→"}
+        # Map each Orientation enum value to its corresponding symbol
         return {
-            self.layer_indices[name]: symbol
-            for name, symbol in orientation_symbols.items()
+            Orientation.UP.value: "↑",
+            Orientation.DOWN.value: "↓",
+            Orientation.LEFT.value: "←",
+            Orientation.RIGHT.value: "→",
         }
 
     def __str__(self) -> str:
