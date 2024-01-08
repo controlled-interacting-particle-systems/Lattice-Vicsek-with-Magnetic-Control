@@ -33,30 +33,14 @@ class ParticleLattice:
         """
         self.width = width
         self.height = height
-        self.num_layers = self.NUM_ORIENTATIONS  # Starting with 4 orientation layers
 
-        # Initialize the lattice as a 3D tensor with dimensions corresponding to
-        # layers/orientations, width, and height.
-        self.lattice = torch.zeros((self.num_layers, height, width), dtype=torch.bool)
-
-        # Layer indices will map layer names to their indices
-        self.layer_indices = {name: i for i, name in enumerate(self.ORIENTATION_LAYERS)}
-
-        # Initialize obstacles and sinks as zero tensors
-        if obstacles is None:
-            self.add_layer(torch.zeros((height, width), dtype=torch.bool), "obstacles")
-        else:
-            self.add_layer(obstacles, "obstacles")
-
-        if sinks is None:
-            self.add_layer(torch.zeros((height, width), dtype=torch.bool), "sinks")
-        else:
-            self.add_layer(sinks, "sinks")
-
-        # Reference to the particle, sinks and obstacles layers for easy access
-        self.particles = self.lattice[: self.NUM_ORIENTATIONS]
-        self.sinks = self.lattice[self.layer_indices["sinks"]]
-        self.obstacles = self.lattice[self.layer_indices["obstacles"]]
+        # Initialize the paricles lattice as a 3D tensor with dimensions corresponding to
+        # orientations, width, and height.
+        self.particles = torch.zeros(
+            (self.NUM_ORIENTATIONS, height, width), dtype=torch.bool
+        )
+        self.obstacles = torch.zeros((height, width), dtype=torch.bool)
+        self.sinks = torch.zeros((height, width), dtype=torch.bool)
 
         # Initialize the lattice with particles at a given density.
     def _validate_coordinates(self, x: int, y: int):
