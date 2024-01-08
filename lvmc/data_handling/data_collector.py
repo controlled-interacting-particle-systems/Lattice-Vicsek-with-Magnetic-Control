@@ -1,40 +1,52 @@
-import pandas as pd
-import numpy as np
-import copy
+# data_collector.py
 
-ORIENTATION_TO_VECTOR = {
-    0: np.array([1, 0]),
-    1: np.array([0, 1]),
-    2: np.array([-1, 0]),
-    3: np.array([0, -1]),
-}
+from typing import Any, Dict
 
 
 class DataCollector:
-    """
-    Class for collecting and analyzing data from the simulation.
+    def __init__(self, simulation: Any) -> None:
+        """
+        Initialize the DataCollector with a simulation object.
 
-    Attributes:
-        event_data (pd.DataFrame): A DataFrame to store event data. Each row represents an event, and the columns are "TimeStep", "dt", "EventType", "X", "Y", and magnetic field direction.
-        metadata (dict): A dictionary to store metadata.
-        initial_state (np.ndarray): The initial state of the lattice.
-    """
+        :param simulation: The simulation object from which data will be collected.
+        """
+        self.simulation = simulation
+        self.data = {
+            "metadata": {
+                "g": simulation.g,
+                "v0": simulation.v0,
+                "lattice_params": simulation.lattice.get_params(),  # Assuming a method to fetch lattice parameters
+            },
+            "initial_config": simulation.lattice.query_lattice_state(),
+            "obstacles": simulation.lattice.obstacles,
+            "sinks": simulation.lattice.sinks,
+            "snapshots": [],
+            "events": [],
+        }
 
-    def __init__(self):
-        # Initialize an empty DataFrame to store data
-        self.event_data = pd.DataFrame(
-            columns=["TimeStep", "dt", "EventType", "X", "Y", "MagneticField"]
+    def collect_snapshot(self) -> None:
+        """
+        Collect and store a snapshot of the current state of the simulation.
+
+        The snapshot includes the current time and the state of the lattice.
+        """
+        self.data["snapshots"].append(
+            (self.simulation.t, self.simulation.lattice.query_lattice_state())
         )
-        self.initial_state = None
-        self.metadata = {}
 
-    def collect_data(self, simulation):
+    def collect_event(self, event: Any) -> None:
         """
-        Collect data from the current state of the simulation.
+        Collect and store data about an event that occurred in the simulation.
 
-        :param simulation: The simulation object.
-        :type simulation: Simulation
+        :param event: The event object containing details about the event.
+                      Assumes that the event object has attributes etype, x, y.
         """
-        # Collect data from simulation
-        self.initial_state = copy.deepcopy(np.array(simulation.lattice.lattice))
-        elapsed_time = simulation.t
+        if event:
+            event_data = {
+                "time": self.simulation.t,
+                "event_type": event.etype.value,
+                "x": event.x,
+                "y": event.y,
+                "magnetic_field": self.simulation.get_magnetic_field_state(),  # Assuming a method to fetch current magnetic field state
+            }
+            self.data["events"].append(event_data)
