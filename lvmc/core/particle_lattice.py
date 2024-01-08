@@ -2,6 +2,14 @@ import torch
 import torch.nn.functional as F
 import numpy as np
 import warnings
+from enum import Enum
+
+
+class Orientation(Enum):
+    UP = 0
+    LEFT = 1
+    DOWN = 2
+    RIGHT = 3
 
 
 class ParticleLattice:
@@ -9,13 +17,7 @@ class ParticleLattice:
     Class for the particle lattice.
     """
 
-    ORIENTATION_LAYERS = [
-        "up",
-        "left",
-        "down",
-        "right",
-    ]  # Class level constants for layer names
-    NUM_ORIENTATIONS = 4  # Class level constant, shared by all instances of the class. Number of possible orientations for a particle
+    NUM_ORIENTATIONS = len(Orientation)  # Class level constant
 
     def __init__(
         self,
