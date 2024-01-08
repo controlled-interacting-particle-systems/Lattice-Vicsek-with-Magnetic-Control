@@ -61,7 +61,19 @@ class ParticleLattice:
         self.obstacles = self.lattice[self.layer_indices["obstacles"]]
 
         # Initialize the lattice with particles at a given density.
-        self.initialize_lattice(density)
+    def _validate_coordinates(self, x: int, y: int):
+        """
+        Validate the coordinates to ensure they are within the lattice bounds.
+
+        Parameters:
+        x (int): x-coordinate to validate.
+        y (int): y-coordinate to validate.
+
+        Raises:
+        ValueError: If the coordinates are outside the lattice bounds, specifying the invalid coordinates.
+        """
+        if x < 0 or x >= self.width or y < 0 or y >= self.height:
+            raise ValueError(f"Coordinates ({x}, {y}) are out of lattice bounds.")
 
     def _create_index_to_symbol_mapping(self) -> dict:
         """
