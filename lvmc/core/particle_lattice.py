@@ -24,16 +24,12 @@ class ParticleLattice:
         width: int,
         height: int,
         density: float = 0.0,
-        obstacles: torch.Tensor = None,
-        sinks: torch.Tensor = None,
     ):
         """
         Initialize the particle lattice.
         :param width: Width of the lattice.
         :param height: Height of the lattice.
-        :param density: Density of particles in the lattice.
-        :param obstacles: A binary matrix indicating the obstacle cells.
-        :param sinks: A binary matrix indicating the sink cells.
+        :param density: Density of particles in the lattice
         """
         self.width = width
         self.height = height
