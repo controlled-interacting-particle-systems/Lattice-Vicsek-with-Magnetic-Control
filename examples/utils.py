@@ -71,8 +71,8 @@ def generate_binary_matrix(height, width, topology_name, walls=None):
 def generate_lattice_topology(
     height,
     width,
-    obstacle_topology,
-    sink_topology,
+    obstacle_topology=None,
+    sink_topology=None,
     obstacle_walls=None,
     sink_walls=None,
 ):
