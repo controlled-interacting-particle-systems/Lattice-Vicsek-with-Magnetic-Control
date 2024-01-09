@@ -1,8 +1,8 @@
 # Parameters for ParticleLattice
 lattice_params = {
     # include relevant parameters here
-    "width": 25,
-    "height": 50,
+    "width": 50,
+    "height": 25,
     "density": 0.3,
 }
 
