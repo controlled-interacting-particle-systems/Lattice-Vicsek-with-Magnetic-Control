@@ -2,8 +2,10 @@ import h5py
 import json
 import torch
 from lvmc.data_handling.data_collector import DataCollector
+
+
 class DataExporter:
-    def __init__(self, filename: str, data_collector: 'DataCollector') -> None:
+    def __init__(self, filename: str, data_collector: "DataCollector") -> None:
         """
         Initialize an exporter for saving simulation data in HDF5 format.
 
@@ -17,7 +19,7 @@ class DataExporter:
         """
         Export the collected data to an HDF5 file.
 
-        This method serializes and stores metadata, initial configuration, 
+        This method serializes and stores metadata, initial configuration,
         snapshots of the simulation, and event data in the specified HDF5 file.
         """
         with h5py.File(self.filename, "w") as file:

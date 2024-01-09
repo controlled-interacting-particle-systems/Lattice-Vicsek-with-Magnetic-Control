@@ -4,7 +4,7 @@ from lvmc.core.simulation import Simulation, Event
 
 
 class DataCollector:
-    def __init__(self, simulation: 'Simulation') -> None:
+    def __init__(self, simulation: "Simulation") -> None:
         """
         Initialize the DataCollector with a simulation object.
 
@@ -34,7 +34,7 @@ class DataCollector:
             (self.simulation.t, self.simulation.lattice.query_lattice_state())
         )
 
-    def collect_event(self, event: 'Event') -> None:
+    def collect_event(self, event: "Event") -> None:
         """
         Collect and store data about an event that occurred in the simulation.
 

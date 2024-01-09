@@ -1,4 +1,5 @@
-from lvmc.core.particle_lattice import ParticleLattice # for type hinting
+from lvmc.core.particle_lattice import ParticleLattice  # for type hinting
+
 
 class MagneticField:
     """
@@ -26,7 +27,7 @@ class MagneticField:
         """
         self.current_direction = direction
 
-    def apply(self, lattice: 'ParticleLattice') -> None:
+    def apply(self, lattice: "ParticleLattice") -> None:
         """
         Apply the magnetic field to all particles on the lattice (a 90 degrees rotation in the prescribed direction).
 
