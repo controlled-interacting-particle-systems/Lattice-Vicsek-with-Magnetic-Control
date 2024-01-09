@@ -724,6 +724,10 @@ class ParticleLattice:
         n = self.particles[:,j1:j2,:].sum().sum().item()
         vx = self.particles[3,j1:j2,:].sum().sum().item() - self.particles[1,j1:j2,:].sum().sum().item()
         vy = -self.particles[0,j1:j2,:].sum().sum().item() + self.particles[2,j1:j2,:].sum().sum().item()
-        return n, float(vx)/float(n), float(vy)/float(n)
+
+        if n == 0:
+            return n, 0, 0
+        else:
+            return n, float(vx)/float(n), float(vy)/float(n)
         
     
