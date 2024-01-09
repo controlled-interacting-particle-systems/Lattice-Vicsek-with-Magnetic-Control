@@ -77,13 +77,15 @@ def main():
     fileDensity_y = open(f"data_withsinks/density_y_size{height}{width}_seed{seed}_v0{v0}_v1{v1}_g{g}.dat", "w")
     fileVely_x = open(f"data_withsinks/meanvely_x_size{height}{width}_seed{seed}_v0{v0}_v1{v1}_g{g}.dat", "w")
     fileVely_y = open(f"data_withsinks/meanvely_y_size{height}{width}_seed{seed}_v0{v0}_v1{v1}_g{g}.dat", "w")
-    file_particles_in_sinks = open(f"data_withsinks/numparticles_in_sinks{height}{width}_seed{seed}_v0{v0}_v1{v1}__g{g}.dat", "w")
+    file_particles_in_sinks = open(f"data_withsinks/numparticles_in_sinks{height}{width}_seed{seed}_v0{v0}_v1{v1}_g{g}.dat", "w")
     file_lattice = open(f"data_withsinks/lattice_saved_{height}{width}_seed{seed}_v0{v0}_v1{v1}_g{g}.dat", "w")
 
 
 
     print ('obstacles == ' , simulation.lattice.obstacles.sum().sum())
     for _ in tqdm(range(n_steps)):
+
+        
         
         if _ %100==0: #save quantities
             array_to_save = np.array([_, simulation.lattice.particles[:].sum().sum(), simulation.lattice.count_region[0],simulation.lattice.count_region[1], simulation.lattice.count_region[2], simulation.lattice.count_region[3], simulation.lattice.count_region[4]])
