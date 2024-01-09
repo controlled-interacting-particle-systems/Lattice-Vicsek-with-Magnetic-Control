@@ -1,74 +1,105 @@
+import h5py
 import matplotlib.pyplot as plt
+import matplotlib.patches as patches
 import numpy as np
-from matplotlib.animation import FuncAnimation
-from matplotlib.patches import Polygon
 
 
 class Visualization:
-    """
-    Class to manage the animated visualization of the 2D lattice and particle orientations.
+    def __init__(self, data_source=None):
+        self.data_source = data_source
+        self.ax = None  # Placeholder for the axes object
+        if data_source:
+            self.setup_static_elements()
 
-    Attributes:
-        lattice (Lattice): The lattice object.
-    """
-
-    def __init__(self, lattice):
-        self.lattice = lattice
-
-    def draw_triangle(self, x, y, orientation, color, ax):
-        """Draw a custom triangle based on orientation."""
-        size = 0.2
-        if orientation == 0:  # Up
-            vertices = [(x, y + size), (x - size, y - size), (x + size, y - size)]
-        elif orientation == 1:  # Down
-            vertices = [(x, y - size), (x - size, y + size), (x + size, y + size)]
-        elif orientation == 2:  # Left
-            vertices = [(x - size, y), (x + size, y - size), (x + size, y + size)]
-        elif orientation == 3:  # Right
-            vertices = [(x + size, y), (x - size, y - size), (x - size, y + size)]
-
-        polygon = Polygon(vertices, closed=True, facecolor="none", edgecolor=color)
-        ax.add_patch(polygon)
-
-    def animate_lattice(self, num_frames, time_interval, simulation):
+    def setup_static_elements(self):
         """
-        Animate the lattice with particles and their orientations.
-
-        :param num_frames: Number of frames for the animation.
-        :type num_frames: int
-        :param time_interval: Time interval between frames.
-        :type time_interval: int
-        :param simulation: Simulation object to update particle states.
-        :type simulation: Simulation
+        Set up static elements in the plot, such as obstacles and sinks.
         """
+        fig, self.ax = plt.subplots()
+        obstacles = self.data_source.data["obstacles"]
+        sinks = self.data_source.data["sinks"]
+
+        for y in range(obstacles.shape[0]):
+            for x in range(obstacles.shape[1]):
+                if obstacles[y, x]:
+                    self.ax.add_patch(
+                        patches.Rectangle((x - 0.5, y - 0.5), 1, 1, facecolor="black")
+                    )
+                if sinks[y, x]:
+                    self.ax.add_patch(
+                        patches.Circle(
+                            (x, y), radius=0.3, facecolor="white", edgecolor="black"
+                        )
+                    )
+
+    def draw_orientation(self, x, y, orientation):
+        size = 0.4  # Size of the triangle
+        orientations = [
+            (np.pi, "blue"),
+            (-np.pi / 2, "green"),
+            (0, "red"),
+            (np.pi / 2, "yellow"),
+        ]
+        if orientation < 4:
+            angle, color = orientations[orientation]
+            return patches.RegularPolygon(
+                (x, y),
+                numVertices=3,
+                radius=size,
+                orientation=angle,
+                edgecolor="none",
+                facecolor=color,
+            )
+
+    def update_plot(self, snapshot):
+        """
+        Update the plot with the current snapshot of the simulation.
+
+        :param snapshot: The current state of the simulation.
+        """
+        if not self.ax:
+            raise ValueError("Plot axes not initialized.")
+
+        self.ax.clear()
+
+        for y in range(snapshot.shape[1]):
+            for x in range(snapshot.shape[2]):
+                for orientation in range(4):
+                    if snapshot[orientation, y, x]:
+                        triangle = self.draw_orientation(x, y, orientation)
+                        self.ax.add_patch(triangle)
+
+        self.ax.set_xlim(0, snapshot.shape[2])
+        self.ax.set_ylim(0, snapshot.shape[1])
+        self.ax.set_aspect("equal")
+        self.ax.invert_yaxis()
+
+    def real_time_visualization(self, interval=50):
+        if self.data_source is None:
+            raise ValueError("Data source is not provided for real-time visualization.")
+
         fig, ax = plt.subplots()
-        orientation_colors = [
-            "r",
-            "g",
-            "b",
-            "m",
-        ]  # Different colors for each orientation
+        plt.ion()  # Turn on interactive mode
 
-        def update(frame):
-            ax.clear()
-            simulation.run_time_step()
+        for frame in range(len(self.data_source.data["snapshots"])):
+            snapshot = self.data_source.data["snapshots"][frame][1]
+            self.update_plot(snapshot, ax)
+            plt.draw()
+            plt.pause(interval / 1000.0)  # interval is in milliseconds
 
-            for y in range(self.lattice.height):
-                for x in range(self.lattice.width):
-                    particle = self.lattice.grid[y, x]
-                    if particle is not None:
-                        orientation = particle.get_orientation()
-                        color = orientation_colors[orientation]
-                        self.draw_triangle(x, y, orientation, color, ax)
+        plt.ioff()  # Turn off interactive mode
 
-            ax.set_aspect("equal", "box")
-            ax.set_xlim(-1, self.lattice.width)
-            ax.set_ylim(-1, self.lattice.height)
+    def post_processing_visualization(self, hdf5_file, interval=50):
+        with h5py.File(hdf5_file, "r") as file:
+            fig, ax = plt.subplots()
+            snapshots = file["snapshots"]
 
-            # Display the elapsed time
-            elapsed_time_str = f"Elapsed Time: {simulation.t:.2f}"
-            time_steps_str = f"Time Steps: {simulation.time_steps}"
-            ax.set_title(elapsed_time_str + "\n" + time_steps_str)
-
-        ani = FuncAnimation(fig, update, frames=num_frames, interval=time_interval)
-        plt.show()
+            for i in range(len(snapshots.keys())):
+                print(
+                    f"Processing snapshot {i + 1}/{len(snapshots.keys())}"
+                )  # Debug print
+                snapshot = snapshots[f"snapshot_{i}"][()]
+                self.update_plot(snapshot)
+                plt.draw()
+                plt.pause(interval / 1000.0)  # interval is in milliseconds
+            plt.show()
