@@ -503,7 +503,7 @@ class ParticleLattice:
         :param obstacles: A binary matrix indicating the obstacle cells.
         """
         if obstacles.shape != (self.height, self.width):
-            raise ValueError("Obstacles tensor must match the lattice dimensions.")
+            raise ValueError(f"Obstacles tensor must match the lattice dimensions. \n >>> {obstacles.shape=}, {(self.height, self.width)=}")
         self.obstacles = obstacles
 
     def set_sinks(self, sinks: torch.Tensor) -> None:
