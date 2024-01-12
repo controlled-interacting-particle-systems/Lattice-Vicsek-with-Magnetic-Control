@@ -381,7 +381,7 @@ class ParticleLattice:
         ValueError: If the coordinates are out of the lattice bounds.
         """
         self._validate_coordinates(x, y)
-        return self.obstacles[y, x]
+        return self.obstacles[y, x] == 1
 
     def _is_sink(self, x: int, y: int) -> bool:
         """
@@ -398,7 +398,7 @@ class ParticleLattice:
         ValueError: If the coordinates are out of the lattice bounds.
         """
         self._validate_coordinates(x, y)
-        return self.sinks[y, x]
+        return self.sinks[y, x] == 1
 
     def get_particle_orientation(self, x: int, y: int) -> Orientation:
         """
