@@ -165,3 +165,9 @@ examples/ParticleLatticeSimulation.ipynb
 docs/
 .DS_Store
 xp_nb.ipynb
+*.hdf5
+*.prof
+
+
+# Visual Studio Code
+.vscode/
