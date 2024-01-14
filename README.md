@@ -1,4 +1,4 @@
-# Particle Lattice Simulation
+# Lattice Vicsek with Magnetic Control
 
 ## Model Overview
 
