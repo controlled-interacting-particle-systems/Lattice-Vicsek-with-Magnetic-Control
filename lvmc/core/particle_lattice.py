@@ -12,7 +12,16 @@ class Orientation(Enum):
     DOWN = 2
     RIGHT = 3
 
-
+class Particle(namedtuple('ParticleBase', 'id x y')):
+    def move(self, new_x: int, new_y: int):
+        """
+        Move the particle to a new position and return a new Particle instance.
+        :param new_x: x-coordinate of the new position.
+        :param new_y: y-coordinate of the new position.
+        :return: New instance of Particle with updated position.
+        """
+        return Particle(self.id, new_x, new_y)
+    
 class ParticleLattice:
     """
     Class for the particle lattice.
@@ -46,6 +55,11 @@ class ParticleLattice:
         )
         self.obstacles = torch.zeros((height, width), dtype=torch.bool)
         self.sinks = torch.zeros((height, width), dtype=torch.bool)
+
+        # Particle tracking
+        self.particle_tracker = {}  # Dictionary to track particles
+        self.position_to_particle_id = {} # Dictionary to map positions to particle IDs
+        self.next_particle_id = 0  # Counter to assign unique IDs to particles
 
         # Initialize the lattice with particles at a given density.
         self._initialize_lattice(density)
@@ -201,6 +215,10 @@ class ParticleLattice:
 
         if self._is_empty(x, y) and not self._is_obstacle(x, y):
             self.particles[orientation.value, y, x] = True
+            particle = Particle(self.next_particle_id, x, y)
+            self.particle_tracker[self.next_particle_id] = particle
+            self.position_to_particle_id[(x, y)] = self.next_particle_id
+            self.next_particle_id += 1
         else:
             raise ValueError(
                 f"Cannot add particle, cell ({x},{y}) is occupied or is an obstacle."
@@ -259,6 +277,7 @@ class ParticleLattice:
         :return: True if the particle was moved successfully, False otherwise.
         :raises ValueError: If no particle is found at the given location.
         """
+
         # Check if the particle exists at the given location
         if self._is_empty(x, y):
             raise ValueError("No particle found at the given location.")
@@ -272,17 +291,24 @@ class ParticleLattice:
         # Check if the new position is occupied or is an obstacle
         if self._is_obstacle(new_x, new_y) or not self._is_empty(new_x, new_y):
             warnings.warn(
-                "Cannot move particle to the target position as there is an obstacle or another particle there.",
+                "Cannot move particle to the target position as there is an obstacle or another particle there. This suggests there is a bug in the transition rate computation.",
                 stacklevel=2,
             )
             return False
+        
+        # get the id of the particle at (x, y)
+        particle_id = self.position_to_particle_id.pop((x, y), None)
+        particle = self.particle_tracker[particle_id] # get the particle object
+        particle = particle.move(new_x, new_y) # move the particle to the new position
+        self.particle_tracker[particle_id] = particle # update the particle tracker
+        self.position_to_particle_id[(new_x, new_y)] = particle_id # update the position to particle id mapping
 
         # Check if the new position is a sink, if so remove the particle
         if self._is_sink(new_x, new_y):
             self.remove_particle(x, y)
             return True
 
-        # Move the particle
+        # Update the particle's position in the lattice
         self.remove_particle(x, y)
         self.add_particle(new_x, new_y, orientation)
 
