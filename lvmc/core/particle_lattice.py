@@ -196,6 +196,72 @@ class ParticleLattice:
         self._validate_coordinates(x, y)
         return self.sinks[y, x] == 1
 
+    def _validate_availability(self, x: int, y: int) -> None:
+        """
+        Validate that the specified cell is available for particle movement.
+
+        Parameters:
+        x (int): x-coordinate of the cell in the lattice.
+        y (int): y-coordinate of the cell in the lattice.
+
+        Raises:
+        ValueError: If the coordinates are out of the lattice bounds.
+        ValueError: If the specified cell is an obstacle.
+        ValueError: If the specified cell is a non-empty.
+        """
+        if self.mode == "optimized":
+            return
+        self._validate_coordinates(x, y)
+        if self._is_obstacle(x, y):
+            raise ValueError(f"Site ({x}, {y}) is an obstacle.")
+        if not self._is_empty(x, y):
+            raise ValueError(f"Site ({x}, {y}) is not empty.")
+
+    def _validate_occupancy(self, x: int, y: int) -> None:
+        """
+        Validate that the specified cell is occupied by a particle.
+
+        Parameters:
+        x (int): x-coordinate of the cell in the lattice.
+        y (int): y-coordinate of the cell in the lattice.
+
+        Raises:
+        ValueError: If the coordinates are out of the lattice bounds.
+        ValueError: If the specified cell is empty.
+        """
+        if self.mode == "optimized":
+            return
+        self._validate_coordinates(x, y)
+        if self._is_empty(x, y):
+            raise ValueError(f"Site ({x}, {y}) is empty.")
+
+    def _update_tracking(self, id: int, x: int, y: int) -> None:
+        """
+        Update the particle tracking dictionaries.
+        :param id: The id of the particle.
+        :param x: The x-coordinate of the particle.
+        """
+        self.id_to_position[id] = (x, y)
+        self.position_to_particle_id[(x, y)] = id
+
+    @property
+    def shape(self):
+        """
+        Returns the shape (height, width) of the lattice.
+        """
+        return (self.height, self.width)
+
+    @property
+    def density(self):
+        """
+        Returns the density of the lattice, calculated as the ratio of occupied cells to total cells.
+        """
+        num_occupied_cells = (
+            self.particles.any(dim=0).sum().item()
+        )  # Count occupied cells
+        total_cells = self.width * self.height
+        return num_occupied_cells / total_cells if total_cells > 0 else 0
+
     ###################################
     ## Particle Manipulation Methods ##
     ###################################
@@ -212,16 +278,16 @@ class ParticleLattice:
         if not isinstance(orientation, Orientation):
             raise ValueError("orientation must be an instance of Orientation enum.")
 
-        if self._is_empty(x, y) and not self._is_obstacle(x, y):
-            self.particles[orientation.value, y, x] = True
-            particle = Particle(self.next_particle_id, x, y)
-            self.particle_tracker[self.next_particle_id] = particle
-            self.position_to_particle_id[(x, y)] = self.next_particle_id
-            self.next_particle_id += 1
-        else:
-            raise ValueError(
-                f"Cannot add particle, cell ({x},{y}) is occupied or is an obstacle."
-            )
+        # Validate that the specified cell is available for particle movement
+        self._validate_availability(x, y)
+
+        self.particles[orientation.value, y, x] = True  # Add particle to the lattice
+
+        self._update_tracking(
+            self.next_particle_id, x, y
+        )  # update the particle tracking dictionaries
+
+        self.next_particle_id += 1  # increment the next particle id
 
     def remove_particle(self, x: int, y: int) -> None:
         """
