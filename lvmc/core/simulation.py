@@ -107,14 +107,22 @@ class Simulation:
         :return: An Event object representing the chosen event, which includes the
                 event type and the (x, y) coordinates on the lattice where it occurs.
         """
-        rates_flat: torch.Tensor = self.rates.view(-1)
-        total_rate: float = rates_flat.sum().item()
+        rates_flat = self.rates.view(-1)
+        total_rate = rates_flat.sum().item()
+
         if total_rate == 0:
             raise ValueError(
                 "Cannot choose event: Total rate is zero, indicating no possible events."
             )
 
-        chosen_index: int = torch.multinomial(rates_flat, 1).item()
+        # Generate a uniform random number between 0 and total_rate
+        random_value = torch.rand(1).item() * total_rate
+
+        # Use cumulative sum and binary search to find the event
+        cumulative_rates = torch.cumsum(rates_flat, dim=0)
+        chosen_index = torch.searchsorted(
+            cumulative_rates, torch.tensor([random_value])
+        ).item()
 
         # Convert the flat index back into 3D index
         # convert the flat index back into 3D index using numpy.unravel_index because torch.unravel_index is not implemented yet
