@@ -309,9 +309,9 @@ class ParticleLattice:
         :return: The orientation of the particle as an Orientation enum instance.
         :raises ValueError: If no particle is found at the given location.
         """
-        # If no particle is found at the given location, raise a value error
-        if self._is_empty(x, y):
-            raise ValueError(f"No particle found at the given location: ({x}, {y}).")
+        self._validate_occupancy(
+            x, y
+        )  # If no particle is found at the given location, raise a value error
 
         # Get the orientation of the particle
         orientation_index = self.particles[:, y, x].nonzero(as_tuple=True)[0].item()
