@@ -537,6 +537,25 @@ class ParticleLattice:
 
         return tr * (torch.ones_like(self.particles) ^ self.particles)
 
+    def compute_local_tm(self, x: int, y: int, v0: float = 1.0) -> float:
+        """
+        Compute the local migration transition rate at (x, y).
+        It's v0 if the target cell is empty, 0 otherwise.
+        """
+        # Validate coordinates
+        self._validate_coordinates(x, y)
+
+        if self._is_empty(x, y):
+            return 0.0
+        # Get the coordinates of the target cell
+        new_x, new_y = self._get_target_position(x, y)
+
+        # Check if the target cell is empty
+        if self._is_empty(new_x, new_y):
+            return v0
+        else:
+            return 0.0
+
     ##################################
     ## State Querying and Reporting ##
     ##################################
