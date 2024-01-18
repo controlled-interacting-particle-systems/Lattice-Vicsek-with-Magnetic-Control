@@ -296,20 +296,8 @@ class ParticleLattice:
         :param x: x-coordinate of the node.
         :param y: y-coordinate of the node.
         """
-        if self._is_empty(x, y):
-            warnings.warn(
-                "Trying to remove a particle from an empty cell. Please make sure that this is intended.",
-                stacklevel=2,
-            )
-        if self._is_obstacle(x, y):
-            warnings.warn(
-                "Trying to remove a particle from an obstacle. Please make sure that this is intended.",
-                stacklevel=2,
-            )
-        if x < 0 or x >= self.width or y < 0 or y >= self.height:
-            raise ValueError(
-                "Cannot remove particle, cell is outside the lattice bounds."
-            )
+        # Validate coordinates
+        self._validate_coordinates(x, y)
         self.particles[:, y, x] = False  # Remove particle from all orientations
 
     def get_particle_orientation(self, x: int, y: int) -> Orientation:
