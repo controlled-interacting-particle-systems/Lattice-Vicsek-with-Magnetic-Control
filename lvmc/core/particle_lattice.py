@@ -14,15 +14,6 @@ class Orientation(Enum):
     DOWN = 2
     RIGHT = 3
 
-class Particle(namedtuple('ParticleBase', 'id x y')):
-    def move(self, new_x: int, new_y: int):
-        """
-        Move the particle to a new position and return a new Particle instance.
-        :param new_x: x-coordinate of the new position.
-        :param new_y: y-coordinate of the new position.
-        :return: New instance of Particle with updated position.
-        """
-        return Particle(self.id, new_x, new_y)
     
 class ParticleLattice:
     """
@@ -55,13 +46,13 @@ class ParticleLattice:
         # Initialize the paricles lattice as a 3D tensor with dimensions corresponding to
         # orientations, width, and height.
         self.particles = torch.zeros(
-            (self.NUM_ORIENTATIONS, height, width), dtype=torch.bool
+            (self.NUM_ORIENTATIONS, height, width), dtype=torch.bool, device=device
         )
-        self.obstacles = torch.zeros((height, width), dtype=torch.bool)
-        self.sinks = torch.zeros((height, width), dtype=torch.bool)
+        self.obstacles = torch.zeros((height, width), dtype=torch.bool, device=device)
+        self.sinks = torch.zeros((height, width), dtype=torch.bool, device=device)
 
         # Particle tracking
-        self.particle_tracker = {}  # Dictionary to track particles
+        self.id_to_position = {}  # Dictionary to track particles
         self.position_to_particle_id = {} # Dictionary to map positions to particle IDs
         self.next_particle_id = 0  # Counter to assign unique IDs to particles
 
@@ -471,7 +462,7 @@ class ParticleLattice:
 
         # Common kernel for convolution
         kernel = (
-            torch.tensor([[0, 1, 0], [1, 0, 1], [0, 1, 0]], dtype=torch.float32)
+            torch.tensor([[0, 1, 0], [1, 0, 1], [0, 1, 0]], dtype=torch.float32, device=device)
             .unsqueeze(0)
             .unsqueeze(0)
         )
@@ -479,7 +470,7 @@ class ParticleLattice:
         # Convolve each orientation layer of the lattice
         log_TR_tensor = torch.zeros(
             (ParticleLattice.NUM_ORIENTATIONS, self.height, self.width),
-            dtype=torch.float32,
+            dtype=torch.float32, device=device
         )
         for orientation in Orientation:
             input_tensor = (
