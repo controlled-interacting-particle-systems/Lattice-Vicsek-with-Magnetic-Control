@@ -15,6 +15,7 @@ class EventType(Enum):
     MIGRATION = auto()
     # Future event types can be added here, e.g., TRANSPORT_BY_FLOW = auto()
 
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 class Event(NamedTuple):
     etype: EventType

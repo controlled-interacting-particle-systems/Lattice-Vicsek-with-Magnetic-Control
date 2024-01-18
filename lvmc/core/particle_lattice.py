@@ -6,6 +6,8 @@ from enum import Enum
 from collections import namedtuple
 
 
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+print(f"Using device: {device}")
 class Orientation(Enum):
     UP = 0
     LEFT = 1
