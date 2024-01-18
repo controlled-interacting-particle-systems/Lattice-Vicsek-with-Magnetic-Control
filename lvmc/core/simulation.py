@@ -91,7 +91,8 @@ class Simulation:
         assert (
             total_rate > 0
         ), "Total rate must be positive to sample from Exponential distribution."
-        return torch.distributions.Exponential(total_rate).sample().item()
+        random_value = torch.rand(1).item()
+        return -np.log(random_value) / total_rate
 
     def choose_event(self) -> Event:
         """
