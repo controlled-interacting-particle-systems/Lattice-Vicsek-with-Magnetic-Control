@@ -133,7 +133,7 @@ class Simulation:
 
         return Event(event_type, x, y)
 
-    def perform_event(self, event: Event) -> None:
+    def perform_event(self, event: Event) -> List[tuple]:
         """
         Execute the specified event on the lattice.
 
@@ -148,8 +148,10 @@ class Simulation:
         if event.is_reorientation():
             orientation = Orientation(event.etype.value)
             self.lattice.reorient_particle(event.x, event.y, orientation)
+            return [(event.x, event.y)]
         elif event.is_migration():
-            self.lattice.move_particle(event.x, event.y)
+            new_pos = self.lattice.move_particle(event.x, event.y)
+            return [(event.x, event.y)] + new_pos
         else:
             raise ValueError(f"Unrecognized event type: {event.etype}")
 
