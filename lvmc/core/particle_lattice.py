@@ -483,19 +483,23 @@ class ParticleLattice:
 
         # Common kernel for convolution
         kernel = (
-            torch.tensor([[0, 1, 0], [1, 0, 1], [0, 1, 0]], dtype=torch.float32, device=device)
+            torch.tensor(
+                [[0, 1, 0], [1, 0, 1], [0, 1, 0]], dtype=torch.float32, device=device
+            )
             .unsqueeze(0)
             .unsqueeze(0)
         )
 
+        padded_particles = F.pad(self.particles, pad=(1, 1, 1, 1), mode="circular")
         # Convolve each orientation layer of the lattice
         log_TR_tensor = torch.zeros(
             (ParticleLattice.NUM_ORIENTATIONS, self.height, self.width),
-            dtype=torch.float32, device=device
+            dtype=torch.float32,
+            device=device,
         )
         for orientation in Orientation:
             input_tensor = (
-                self.particles[orientation.value].unsqueeze(0).unsqueeze(0).float()
+                padded_particles[orientation.value].unsqueeze(0).unsqueeze(0).float()
             )
             log_TR_tensor[orientation.value] = F.conv2d(
                 input_tensor, kernel, padding=1
