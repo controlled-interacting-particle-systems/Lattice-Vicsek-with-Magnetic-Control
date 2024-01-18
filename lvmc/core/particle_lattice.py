@@ -452,8 +452,8 @@ class ParticleLattice:
         """
         Compute the migration transition rate tensor TM with periodic boundary conditions.
         """
-        # Calculate empty cells (where no particle is present)
-        empty_cells = ~self.particles.sum(dim=0).bool()
+        # Calculate empty cells (where no particle nor obstacle is present)
+        empty_cells = ~(self.particles.sum(dim=0) + self.obstacles).bool()
 
         # Calculate potential moves in each direction
         TM_up = self.particles[Orientation.UP.value] * empty_cells.roll(
