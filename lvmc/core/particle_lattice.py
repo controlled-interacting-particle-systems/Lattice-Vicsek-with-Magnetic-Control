@@ -420,21 +420,9 @@ class ParticleLattice:
         Raises:
         ValueError: If the specified position is outside the lattice bounds or already occupied.
         """
-        if self.sinks is None:
-            self.sinks = torch.zeros((self.height, self.width), dtype=torch.bool)
-        if 0 <= x < self.width and 0 <= y < self.height:
-            if not self._is_empty(x, y) or self._is_obstacle(x, y):
-                raise ValueError(
-                    "Cannot place a sink on a non-empty cell or a cell with an obstacle."
-                )
-            if self._is_sink(x, y):
-                warnings.warn(
-                    "Trying to place a sink on a cell that is already a sink. Please make sure that this is intended.",
-                    stacklevel=2,
-                )
-            self.sinks[y, x] = True
-        else:
-            raise ValueError("Position is outside the lattice bounds.")
+        self._validate_coordinates(x, y)
+        self._validate_availability(x, y)
+        self.sinks[y, x] = True
 
     def set_obstacles(self, obstacles: torch.Tensor) -> None:
         """
