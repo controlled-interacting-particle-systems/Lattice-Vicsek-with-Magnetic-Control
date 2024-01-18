@@ -55,18 +55,31 @@ class Simulation:
         # Initialize time
         self.t = 0.0
 
-    def update_rates(self):
+    def initialize_rates(self) -> None:
+        """
+        Initialize the rates tensor.
+        """
+        n_orientations = len(Orientation)
+        self.rates[:n_orientations] = self.lattice.compute_tr(self.g)
+        self.rates[n_orientations] = self.lattice.compute_tm(self.v0)
+
+    def update_rates(self, positions: list) -> None:
         """
         Update the rates tensor based on the current state of the lattice.
         """
         n_orientations = len(Orientation)
-        TR = self.lattice.compute_tr(self.g)
-        self.rates[
-            :n_orientations, :, :
-        ] = TR  # 4 is the number of reorientation events
+        # compute a list of the neighbours of positions
+        affected_cells = positions
+        for index in range(len(positions)):
+            affected_cells += self.lattice.get_neighbours(*positions[index])
 
-        TM = self.lattice.compute_tm(self.v0)
-        self.rates[n_orientations, :, :] = TM  # 4 is the number of reorientation events
+        for x, y in affected_cells:
+            self.rates[:n_orientations, y, x] = self.lattice.compute_local_tr(
+                x, y, self.g
+            )
+            self.rates[n_orientations, y, x] = self.lattice.compute_local_tm(
+                x, y, self.v0
+            )
 
     def next_event_time(self) -> float:
         """
