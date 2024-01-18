@@ -610,3 +610,46 @@ class ParticleLattice:
         :return: A string representation of the lattice.
         """
         return self.__str__()
+
+    def __getitem__(self, key):
+        """
+        Enables slicing of the ParticleLattice and validates the slicing keys.
+
+        :param key: The slicing key.
+        :return: A new ParticleLattice instance with the sliced data.
+        """
+        # Validate and adjust the slicing keys
+        if not isinstance(key, tuple) or len(key) != 2:
+            raise ValueError("Slicing key must be a tuple of two slice objects.")
+
+        key_y, key_x = key
+        key_y = slice(
+            max(0, key_y.start or 0),
+            min(self.height, key_y.stop or self.height),
+            key_y.step,
+        )
+        key_x = slice(
+            max(0, key_x.start or 0),
+            min(self.width, key_x.stop or self.width),
+            key_x.step,
+        )
+        adjusted_key = (key_y, key_x)
+
+        # Create a new instance of ParticleLattice
+        new_lattice = ParticleLattice(self.width, self.height, mode=self.mode)
+
+        # Slicing the tensors
+        new_lattice.particles = self.particles[:, adjusted_key[0], adjusted_key[1]]
+        new_lattice.obstacles = self.obstacles[adjusted_key[0], adjusted_key[1]]
+        new_lattice.sinks = self.sinks[adjusted_key[0], adjusted_key[1]]
+
+        # Update the width and height of the new lattice
+        new_lattice.width = new_lattice.obstacles.shape[1]
+        new_lattice.height = new_lattice.obstacles.shape[0]
+
+        # Resetting other attributes
+        new_lattice.id_to_position = {}
+        new_lattice.position_to_particle_id = {}
+        new_lattice.next_particle_id = 0
+
+        return new_lattice
