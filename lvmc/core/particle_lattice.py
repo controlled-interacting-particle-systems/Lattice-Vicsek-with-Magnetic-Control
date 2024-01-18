@@ -130,19 +130,23 @@ class ParticleLattice:
         """
         return not self.particles[:, y, x].any()
 
-    def _get_target_position(self, x: int, y: int, orientation: Orientation) -> tuple:
+    def _get_target_position(self, x: int, y: int) -> tuple:
         """
         Get the expected position of a particle at (x, y) with a given orientation.
 
         :param x: Current x-coordinate of the particle.
         :param y: Current y-coordinate of the particle.
-        :param orientation: Current orientation of the particle which determines the direction of movement.
         :return: The expected position of the particle.
-        :raises ValueError: If invalid orientation is provided.
         """
-        # Validate the orientation
-        if not isinstance(orientation, Orientation):
-            raise ValueError("Invalid orientation type.")
+
+        # Validate coordinates
+        self._validate_coordinates(x, y)
+
+        # Validate occupancy
+        self._validate_occupancy(x, y)
+
+        # Get the orientation of the particle
+        orientation = self.get_particle_orientation(x, y)
 
         # Calculate new position based on orientation
         if orientation == Orientation.UP:
