@@ -40,6 +40,7 @@ class ParticleLattice:
         width: int,
         height: int,
         density: float = 0.0,
+        mode = 'optimized'
     ):
         """
         Initialize the particle lattice.
@@ -49,6 +50,7 @@ class ParticleLattice:
         """
         self.width = width
         self.height = height
+        self.mode = mode
 
         # Initialize the paricles lattice as a 3D tensor with dimensions corresponding to
         # orientations, width, and height.
