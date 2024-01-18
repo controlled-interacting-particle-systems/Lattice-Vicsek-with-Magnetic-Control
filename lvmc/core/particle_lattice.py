@@ -322,50 +322,42 @@ class ParticleLattice:
         except ValueError:
             raise ValueError(f"Invalid orientation index found: {orientation_index}")
 
-    def move_particle(self, x: int, y: int) -> bool:
+    def move_particle(self, x: int, y: int) -> List[tuple]:
         """
         Move a particle at (x, y) with a given orientation to the new position determined by its current orientation.
         :param x: Current x-coordinate of the particle.
         :param y: Current y-coordinate of the particle.
-        :return: True if the particle was moved successfully, False otherwise.
+        :return: A list of tuples representing the new position of the particle.
         :raises ValueError: If no particle is found at the given location.
         """
 
-        # Check if the particle exists at the given location
-        if self._is_empty(x, y):
-            raise ValueError("No particle found at the given location.")
+        self._validate_occupancy(
+            x, y
+        )  # Check if the particle exists at the given location
 
         # Get the current orientation of the particle at (x, y)
         orientation = self.get_particle_orientation(x, y)
 
         # Get the expected position of the particle
-        new_x, new_y = self._get_target_position(x, y, orientation)
+        new_x, new_y = self._get_target_position(x, y)
 
-        # Check if the new position is occupied or is an obstacle
-        if self._is_obstacle(new_x, new_y) or not self._is_empty(new_x, new_y):
-            warnings.warn(
-                "Cannot move particle to the target position as there is an obstacle or another particle there. This suggests there is a bug in the transition rate computation.",
-                stacklevel=2,
-            )
-            return False
-        
         # get the id of the particle at (x, y)
         particle_id = self.position_to_particle_id.pop((x, y), None)
-        particle = self.particle_tracker[particle_id] # get the particle object
-        particle = particle.move(new_x, new_y) # move the particle to the new position
-        self.particle_tracker[particle_id] = particle # update the particle tracker
-        self.position_to_particle_id[(new_x, new_y)] = particle_id # update the position to particle id mapping
+
+        self._update_tracking(
+            particle_id, new_x, new_y
+        )  # update the particle tracking dictionaries
 
         # Check if the new position is a sink, if so remove the particle
         if self._is_sink(new_x, new_y):
             self.remove_particle(x, y)
-            return True
+            return []
 
         # Update the particle's position in the lattice
         self.remove_particle(x, y)
         self.add_particle(new_x, new_y, orientation)
 
-        return True
+        return [(new_x, new_y)]
 
     def reorient_particle(self, x: int, y: int, new_orientation: Orientation) -> bool:
         """
