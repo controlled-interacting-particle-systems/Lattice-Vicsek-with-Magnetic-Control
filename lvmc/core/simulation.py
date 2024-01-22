@@ -51,7 +51,7 @@ class Simulation:
             (len(Orientation) + 1, self.lattice.height, self.lattice.width),
             dtype=torch.float32,
         )
-        self.update_rates()
+        self.initialize_rates()
         # Initialize time
         self.t = 0.0
 
