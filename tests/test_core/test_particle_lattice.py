@@ -576,3 +576,34 @@ def test_transport_particle():
 
     # Check that the orientation of the particle is correct
     assert lattice.get_particle_orientation(x_new, y_new) == original_orientation
+
+
+def test_compute_log_tr_obstacles():
+    lattice = ParticleLattice(width=10, height=10)
+    x, y = 5, 5
+    orientation = np.random.choice(list(Orientation))
+    lattice.add_particle(x, y, orientation)
+
+    # Get the target position
+    x_new, y_new = lattice._get_target_position(x, y, orientation)
+
+    # Add an obstacle at the target position
+    lattice.set_obstacle(x_new, y_new)
+
+    # Compute the log transition rate term corresponding to the obstacle
+    log_tr = lattice.compute_log_tr_obstacles()
+    
+    # Check that the log transition rate term is correct
+    for index in range(len(Orientation)):
+        # if the orientation is the same as the orientation of the particle, the log transition rate term should be 0
+        if (index == orientation.value) or (index == ((orientation.value + 2) % 4)):
+            assert log_tr[index, y, x] == 0.0
+        else:
+            assert log_tr[index, y, x] == 0.5
+    
+    # Check that all other x,y entries are zero
+    for x in range(lattice.width):
+        for y in range(lattice.height):
+            if x != x_new and y != y_new:
+                assert log_tr[:, y, x].sum() == 0.0
+    
