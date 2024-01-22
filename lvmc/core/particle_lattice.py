@@ -619,6 +619,24 @@ class ParticleLattice:
         local_tr = torch.exp(g * local_log_tr)
 
         return local_tr
+
+    def get_neighbours(self, x: int, y: int) -> List[Tuple[int, int]]:
+        """
+        Get the coordinates of the four neighbouring cells (up, down, left, right)
+        with periodic boundary conditions.
+
+        :param x: The x-coordinate of the cell.
+        :param y: The y-coordinate of the cell.
+
+        :return: A list of tuples, each representing the coordinates of a neighbor.
+        """
+        return [
+            ((x - 1) % self.width, y),  # Up
+            ((x + 1) % self.width, y),  # Down
+            (x, (y - 1) % self.height),  # Left
+            (x, (y + 1) % self.height),  # Right
+        ]
+
     ##################################
     ## State Querying and Reporting ##
     ##################################
