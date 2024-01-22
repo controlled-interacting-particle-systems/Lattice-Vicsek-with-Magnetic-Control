@@ -522,6 +522,53 @@ class ParticleLattice:
 
         return log_TR_tensor
 
+    def compute_log_tr_obstacles(self) -> torch.Tensor:
+        """
+        Compute the reorientation transition log rate tensor near obstacles.
+        """
+        log_tr_obstacles = torch.zeros(
+            (ParticleLattice.NUM_ORIENTATIONS, self.height, self.width),
+            dtype=torch.float32,
+            device=device,
+        )
+
+        # name a variable for the alignment strength with obstacles
+        align_strength = 0.5
+        for shift in [-1, 1]:
+            log_tr_obstacles[Orientation.LEFT.value] = (
+                (
+                    self.particles[Orientation.UP.value]
+                    + self.particle[Orientation.DOWN.value]
+                )
+                * self.obstacles.roll(shifts=shift, dims=0)
+                * align_strength
+            )
+            log_tr_obstacles[Orientation.RIGHT.value] = (
+                (
+                    self.particles[Orientation.UP.value]
+                    + self.particle[Orientation.DOWN.value]
+                )
+                * self.obstacles.roll(shifts=shift, dims=0)
+                * align_strength
+            )
+
+            log_tr_obstacles[Orientation.UP.value] = (
+                (
+                    self.particles[Orientation.RIGHT.value]
+                    + self.particle[Orientation.LEFT.value]
+                )
+                * self.obstacles.roll(shifts=shift, dims=1)
+                * align_strength
+            )
+            log_tr_obstacles[Orientation.DOWN.value] = (
+                (
+                    self.particles[Orientation.RIGHT.value]
+                    + self.particle[Orientation.LEFT.value]
+                )
+                * self.obstacles.roll(shifts=shift, dims=1)
+                * align_strength
+            )
+
     def compute_tr(self, g: float = 1.0) -> None:
         """
         Compute the reorientation transition rate tensor TR.
