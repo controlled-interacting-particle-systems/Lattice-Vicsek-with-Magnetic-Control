@@ -3,18 +3,20 @@ import torch.nn.functional as F
 import numpy as np
 import warnings
 from enum import Enum
-from collections import namedtuple
+from typing import List, Tuple, Optional, Union
 
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(f"Using device: {device}")
+
+
 class Orientation(Enum):
     UP = 0
     LEFT = 1
     DOWN = 2
     RIGHT = 3
 
-    
+
 class ParticleLattice:
     """
     Class for the particle lattice.
@@ -26,13 +28,7 @@ class ParticleLattice:
 
     NUM_ORIENTATIONS = len(Orientation)  # Class level constant
 
-    def __init__(
-        self,
-        width: int,
-        height: int,
-        density: float = 0.0,
-        mode = 'optimized'
-    ):
+    def __init__(self, width: int, height: int, density: float = 0.0, mode="default"):
         """
         Initialize the particle lattice.
         :param width: Width of the lattice.
@@ -53,7 +49,7 @@ class ParticleLattice:
 
         # Particle tracking
         self.id_to_position = {}  # Dictionary to track particles
-        self.position_to_particle_id = {} # Dictionary to map positions to particle IDs
+        self.position_to_particle_id = {}  # Dictionary to map positions to particle IDs
         self.next_particle_id = 0  # Counter to assign unique IDs to particles
 
         # Initialize the lattice with particles at a given density.
@@ -104,6 +100,7 @@ class ParticleLattice:
         Raises:
         ValueError: If the coordinates are outside the lattice bounds, specifying the invalid coordinates.
         """
+
         if x < 0 or x >= self.width or y < 0 or y >= self.height:
             raise ValueError(f"Coordinates ({x}, {y}) are out of lattice bounds.")
 
@@ -130,10 +127,11 @@ class ParticleLattice:
         """
         return not self.particles[:, y, x].any()
 
-    def _get_target_position(self, x: int, y: int) -> tuple:
+    def _get_target_position(self, x: int, y: int, orientation) -> tuple:
         """
         Get the expected position of a particle at (x, y) with a given orientation.
 
+        :param orientation: The orientation of the particle.
         :param x: Current x-coordinate of the particle.
         :param y: Current y-coordinate of the particle.
         :return: The expected position of the particle.
@@ -144,9 +142,6 @@ class ParticleLattice:
 
         # Validate occupancy
         self._validate_occupancy(x, y)
-
-        # Get the orientation of the particle
-        orientation = self.get_particle_orientation(x, y)
 
         # Calculate new position based on orientation
         if orientation == Orientation.UP:
@@ -334,12 +329,9 @@ class ParticleLattice:
         self._validate_occupancy(
             x, y
         )  # Check if the particle exists at the given location
-
-        # Get the current orientation of the particle at (x, y)
         orientation = self.get_particle_orientation(x, y)
-
         # Get the expected position of the particle
-        new_x, new_y = self._get_target_position(x, y)
+        new_x, new_y = self._get_target_position(x, y, orientation)
 
         # get the id of the particle at (x, y)
         particle_id = self.position_to_particle_id.pop((x, y), None)
@@ -357,6 +349,34 @@ class ParticleLattice:
         self.remove_particle(x, y)
         self.add_particle(new_x, new_y, orientation)
 
+        return [(new_x, new_y)]
+
+    def transport_particle(self, x: int, y: int, direction: Orientation) -> List[tuple]:
+        """
+        Move a particle at (x, y) with a given orientation to the new position determined by the prescribed orientation.
+        :param x: Current x-coordinate of the particle.
+        :param y: Current y-coordinate of the particle.
+        :return: A list of tuples representing the new position of the particle.
+        :raises ValueError: If no particle is found at the given location.
+        """
+
+        self._validate_occupancy(
+            x, y
+        )  # Check if the particle exists at the given location
+
+        # Get the expected position of the particle, and the old orientation
+        new_x, new_y = self._get_target_position(x, y, direction)
+        orientation = self.get_particle_orientation(x, y)
+
+        # get the id of the particle at (x, y)
+        particle_id = self.position_to_particle_id.pop((x, y), None)
+        self._update_tracking(particle_id, new_x, new_y)
+        if self._is_sink(new_x, new_y):
+            self.remove_particle(x, y)
+            return []
+
+        self.remove_particle(x, y)
+        self.add_particle(new_x, new_y, orientation)
         return [(new_x, new_y)]
 
     def reorient_particle(self, x: int, y: int, new_orientation: Orientation) -> bool:
@@ -502,7 +522,7 @@ class ParticleLattice:
                 padded_particles[orientation.value].unsqueeze(0).unsqueeze(0).float()
             )
             log_TR_tensor[orientation.value] = F.conv2d(
-                input_tensor, kernel, padding=1
+                input_tensor, kernel, padding=0
             )[0, 0]
 
         # Adjusting the log_TR tensor based on orientation vectors
