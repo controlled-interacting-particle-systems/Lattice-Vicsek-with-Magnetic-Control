@@ -558,7 +558,7 @@ class ParticleLattice:
             log_tr_obstacles[Orientation.LEFT.value] = (
                 (
                     self.particles[Orientation.UP.value]
-                    + self.particle[Orientation.DOWN.value]
+                    + self.particles[Orientation.DOWN.value]
                 )
                 * self.obstacles.roll(shifts=shift, dims=0)
                 * align_strength
@@ -566,7 +566,7 @@ class ParticleLattice:
             log_tr_obstacles[Orientation.RIGHT.value] = (
                 (
                     self.particles[Orientation.UP.value]
-                    + self.particle[Orientation.DOWN.value]
+                    + self.particles[Orientation.DOWN.value]
                 )
                 * self.obstacles.roll(shifts=shift, dims=0)
                 * align_strength
@@ -575,7 +575,7 @@ class ParticleLattice:
             log_tr_obstacles[Orientation.UP.value] = (
                 (
                     self.particles[Orientation.RIGHT.value]
-                    + self.particle[Orientation.LEFT.value]
+                    + self.particles[Orientation.LEFT.value]
                 )
                 * self.obstacles.roll(shifts=shift, dims=1)
                 * align_strength
@@ -583,11 +583,12 @@ class ParticleLattice:
             log_tr_obstacles[Orientation.DOWN.value] = (
                 (
                     self.particles[Orientation.RIGHT.value]
-                    + self.particle[Orientation.LEFT.value]
+                    + self.particles[Orientation.LEFT.value]
                 )
                 * self.obstacles.roll(shifts=shift, dims=1)
                 * align_strength
             )
+        return log_tr_obstacles
 
     def compute_tr(self, g: float = 1.0) -> None:
         """
