@@ -579,7 +579,7 @@ class ParticleLattice:
         # Calculate occupied cells (where at least one particle is present)
         occupied_cells = self.particles.sum(dim=0).bool()
 
-        log_tr = self.compute_log_tr()
+        log_tr = self.compute_log_tr() + self.compute_log_tr_obstacles()
         tr = torch.exp(g * log_tr) * occupied_cells
 
         return tr * (torch.ones_like(self.particles) ^ self.particles)
