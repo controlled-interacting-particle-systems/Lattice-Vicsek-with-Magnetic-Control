@@ -167,8 +167,9 @@ class Simulation:
         delta_t = self.next_event_time()
         self.t += delta_t
         event = self.choose_event()
-        self.perform_event(event)
-        self.update_rates()
+        affected_sites = self.perform_event(event)
+        # self.update_rates(affected_sites)
+        self.initialize_rates()
         return event
 
     def apply_magnetic_field(self) -> None:
