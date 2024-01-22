@@ -603,6 +603,22 @@ class ParticleLattice:
         else:
             return 0.0
 
+    def compute_local_log_tr(self, x: int, y: int) -> torch.Tensor:
+        pass
+
+    def compute_local_tr(self, x: int, y: int, g: float = 1.0) -> torch.Tensor:
+        """
+        Compute the local reorientation transition rate at (x, y).
+        If no particle is present at (x, y), return zero rates.
+        """
+        # Check if the cell is empty
+        if torch.sum(self.particles[:, y, x]) == 0:
+            return torch.zeros((ParticleLattice.NUM_ORIENTATIONS), dtype=torch.float32)
+
+        local_log_tr = self.compute_local_log_tr(x, y)
+        local_tr = torch.exp(g * local_log_tr)
+
+        return local_tr
     ##################################
     ## State Querying and Reporting ##
     ##################################
