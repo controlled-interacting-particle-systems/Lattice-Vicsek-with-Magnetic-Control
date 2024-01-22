@@ -15,7 +15,9 @@ class EventType(Enum):
     MIGRATION = auto()
     # Future event types can be added here, e.g., TRANSPORT_BY_FLOW = auto()
 
+
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
 
 class Event(NamedTuple):
     etype: EventType
@@ -50,6 +52,7 @@ class Simulation:
         self.rates = torch.zeros(
             (len(Orientation) + 1, self.lattice.height, self.lattice.width),
             dtype=torch.float32,
+            device=device,
         )
         self.initialize_rates()
         # Initialize time
