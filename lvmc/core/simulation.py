@@ -141,7 +141,15 @@ class Simulation:
         event = self.choose_event()
         self.perform_event(event)
         self.update_rates()
-        return event
+        info = f"t = {self.t:.3f}, event = {event.etype}, x = {event.x}, y = {event.y}"
+        info_dict = {
+            "dt": delta_t,
+            "t": self.t,
+            "event_type": event.etype,
+            "x": event.x,
+            "y": event.y,
+        }
+        return info, info_dict
 
     def apply_magnetic_field(self) -> None:
         """
