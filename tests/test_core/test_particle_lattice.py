@@ -60,7 +60,7 @@ def test_set_obstacle_outside_bounds():
     lattice = ParticleLattice(width=10, height=10)
     # Coordinates outside the lattice bounds
     x, y = 11, 11
-    with pytest.raises(ValueError):
+    with pytest.raises(IndexError):
         lattice.set_obstacle(x, y)
 
 
@@ -68,7 +68,7 @@ def test_set_sink_outside_bounds():
     lattice = ParticleLattice(width=10, height=10)
     # Coordinates outside the lattice bounds
     x, y = 11, 11
-    with pytest.raises(ValueError):
+    with pytest.raises(IndexError):
         lattice.set_sink(x, y)
 
 
