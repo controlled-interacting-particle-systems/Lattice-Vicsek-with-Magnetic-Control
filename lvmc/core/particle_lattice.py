@@ -102,7 +102,7 @@ class ParticleLattice:
         """
 
         if x < 0 or x >= self.width or y < 0 or y >= self.height:
-            raise ValueError(f"Coordinates ({x}, {y}) are out of lattice bounds.")
+            raise IndexError(f"Coordinates ({x}, {y}) are out of lattice bounds.")
 
     def _create_index_to_symbol_mapping(self) -> dict:
         """
@@ -186,7 +186,7 @@ class ParticleLattice:
         bool: True if the cell is a sink, False otherwise.
 
         Raises:
-        ValueError: If the coordinates are out of the lattice bounds.
+        IndexError: If the coordinates are out of the lattice bounds.
         """
         self._validate_coordinates(x, y)
         return self.sinks[y, x] == 1
@@ -200,7 +200,7 @@ class ParticleLattice:
         y (int): y-coordinate of the cell in the lattice.
 
         Raises:
-        ValueError: If the coordinates are out of the lattice bounds.
+        IndexError: If the coordinates are out of the lattice bounds.
         ValueError: If the specified cell is an obstacle.
         ValueError: If the specified cell is a non-empty.
         """
@@ -221,7 +221,7 @@ class ParticleLattice:
         y (int): y-coordinate of the cell in the lattice.
 
         Raises:
-        ValueError: If the coordinates are out of the lattice bounds.
+        IndexError: If the coordinates are out of the lattice bounds.
         ValueError: If the specified cell is empty.
         """
         if self.mode == "optimized":
