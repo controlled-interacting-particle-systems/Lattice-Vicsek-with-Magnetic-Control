@@ -291,6 +291,10 @@ def test_get_target_position():
     lattice = ParticleLattice(width=10, height=10)
     x, y = 5, 5
 
+    # Add a particle to the lattice in the cell (x,y)
+    orientation = np.random.choice(list(Orientation))
+    lattice.add_particle(x, y, orientation)
+
     # Check if the target position is correct for each orientation
     # 1. Up
     assert lattice._get_target_position(x, y, Orientation.UP) == (
