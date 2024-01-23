@@ -596,18 +596,16 @@ def test_compute_log_tr_obstacles():
 
     # Compute the log transition rate term corresponding to the obstacle
     log_tr = lattice.compute_log_tr_obstacles()
-    
-    # Check that the log transition rate term is correct
-    for index in range(len(Orientation)):
-        # if the orientation is the same as the orientation of the particle, the log transition rate term should be 0
-        if (index == orientation.value) or (index == ((orientation.value + 2) % 4)):
-            assert log_tr[index, y, x] == 0.0
-        else:
-            assert log_tr[index, y, x] == 0.5
-    
+
+    up_down_log_rates = 0.5 * torch.tensor([0.0, 1.0, 0.0, 1.0])
+    left_right_log_rates = 0.5 * torch.tensor([1.0, 0.0, 1.0, 0.0])
+    if orientation == Orientation.UP or orientation == Orientation.DOWN:
+        assert torch.allclose(log_tr[:, y, x], up_down_log_rates)
+    else:
+        assert torch.allclose(log_tr[:, y, x], left_right_log_rates)
+
     # Check that all other x,y entries are zero
     for x in range(lattice.width):
         for y in range(lattice.height):
             if x != x_new and y != y_new:
                 assert log_tr[:, y, x].sum() == 0.0
-    
