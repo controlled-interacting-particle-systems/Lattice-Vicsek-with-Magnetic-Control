@@ -552,42 +552,28 @@ class ParticleLattice:
             device=device,
         )
 
-        # name a variable for the alignment strength with obstacles
-        align_strength = 0.5
-        for shift in [-1, 1]:
-            log_tr_obstacles[Orientation.LEFT.value] = (
-                (
-                    self.particles[Orientation.UP.value]
-                    + self.particles[Orientation.DOWN.value]
-                )
-                * self.obstacles.roll(shifts=shift, dims=0)
-                * align_strength
-            )
-            log_tr_obstacles[Orientation.RIGHT.value] = (
-                (
-                    self.particles[Orientation.UP.value]
-                    + self.particles[Orientation.DOWN.value]
-                )
-                * self.obstacles.roll(shifts=shift, dims=0)
-                * align_strength
-            )
+        obstacle_interaction_strength = 0.5
 
-            log_tr_obstacles[Orientation.UP.value] = (
-                (
-                    self.particles[Orientation.RIGHT.value]
-                    + self.particles[Orientation.LEFT.value]
+        # Mapping of orientations to their perpendicular particle orientations
+        perpendicular_orientations = {
+            Orientation.LEFT: (Orientation.UP, Orientation.DOWN),
+            Orientation.RIGHT: (Orientation.UP, Orientation.DOWN),
+            Orientation.UP: (Orientation.RIGHT, Orientation.LEFT),
+            Orientation.DOWN: (Orientation.RIGHT, Orientation.LEFT),
+        }
+
+        for orientation, (perp1, perp2) in perpendicular_orientations.items():
+            for shift in [-1, 1]:
+                # Choose the dimension perpendicular to particle orientation for obstacle shifting
+                # 0 for horizontal (LEFT, RIGHT) orientations (shift vertically),
+                # 1 for vertical (UP, DOWN) orientations (shift horizontally).
+                dim = 0 if orientation in [Orientation.LEFT, Orientation.RIGHT] else 1
+                log_tr_obstacles[orientation.value] += (
+                    (self.particles[perp1.value] + self.particles[perp2.value])
+                    * self.obstacles.roll(shifts=shift, dims=dim)
+                    * obstacle_interaction_strength
                 )
-                * self.obstacles.roll(shifts=shift, dims=1)
-                * align_strength
-            )
-            log_tr_obstacles[Orientation.DOWN.value] = (
-                (
-                    self.particles[Orientation.RIGHT.value]
-                    + self.particles[Orientation.LEFT.value]
-                )
-                * self.obstacles.roll(shifts=shift, dims=1)
-                * align_strength
-            )
+
         return log_tr_obstacles
 
     def compute_tr(self, g: float = 1.0) -> None:
