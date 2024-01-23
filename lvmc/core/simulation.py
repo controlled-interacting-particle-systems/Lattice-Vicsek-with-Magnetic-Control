@@ -4,7 +4,7 @@ from typing import Optional, Tuple
 from lvmc.core.particle_lattice import ParticleLattice, Orientation
 from lvmc.core.magnetic_field import MagneticField
 from enum import Enum, auto
-from typing import NamedTuple
+from typing import NamedTuple, List
 
 
 class EventType(Enum):
@@ -14,6 +14,9 @@ class EventType(Enum):
     REORIENTATION_RIGHT = Orientation.RIGHT.value
     MIGRATION = auto()
     # Future event types can be added here, e.g., TRANSPORT_BY_FLOW = auto()
+
+
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 class Event(NamedTuple):
@@ -49,23 +52,37 @@ class Simulation:
         self.rates = torch.zeros(
             (len(Orientation) + 1, self.lattice.height, self.lattice.width),
             dtype=torch.float32,
+            device=device,
         )
-        self.update_rates()
+        self.initialize_rates()
         # Initialize time
         self.t = 0.0
 
-    def update_rates(self):
+    def initialize_rates(self) -> None:
+        """
+        Initialize the rates tensor.
+        """
+        n_orientations = len(Orientation)
+        self.rates[:n_orientations] = self.lattice.compute_tr(self.g)
+        self.rates[n_orientations] = self.lattice.compute_tm(self.v0)
+
+    def update_rates(self, positions: list) -> None:
         """
         Update the rates tensor based on the current state of the lattice.
         """
         n_orientations = len(Orientation)
-        TR = self.lattice.compute_tr(self.g)
-        self.rates[
-            :n_orientations, :, :
-        ] = TR  # 4 is the number of reorientation events
+        # compute a list of the neighbours of positions
+        affected_cells = positions
+        for index in range(len(positions)):
+            affected_cells += self.lattice.get_neighbours(*positions[index])
 
-        TM = self.lattice.compute_tm(self.v0)
-        self.rates[n_orientations, :, :] = TM  # 4 is the number of reorientation events
+        for x, y in affected_cells:
+            self.rates[:n_orientations, y, x] = self.lattice.compute_local_tr(
+                x, y, self.g
+            )
+            self.rates[n_orientations, y, x] = self.lattice.compute_local_tm(
+                x, y, self.v0
+            )
 
     def next_event_time(self) -> float:
         """
@@ -77,7 +94,8 @@ class Simulation:
         assert (
             total_rate > 0
         ), "Total rate must be positive to sample from Exponential distribution."
-        return torch.distributions.Exponential(total_rate).sample().item()
+        random_value = torch.rand(1).item()
+        return -np.log(random_value) / total_rate
 
     def choose_event(self) -> Event:
         """
@@ -92,14 +110,22 @@ class Simulation:
         :return: An Event object representing the chosen event, which includes the
                 event type and the (x, y) coordinates on the lattice where it occurs.
         """
-        rates_flat: torch.Tensor = self.rates.view(-1)
-        total_rate: float = rates_flat.sum().item()
+        rates_flat = self.rates.view(-1)
+        total_rate = rates_flat.sum().item()
+
         if total_rate == 0:
             raise ValueError(
                 "Cannot choose event: Total rate is zero, indicating no possible events."
             )
 
-        chosen_index: int = torch.multinomial(rates_flat, 1).item()
+        # Generate a uniform random number between 0 and total_rate
+        random_value = torch.rand(1).item() * total_rate
+
+        # Use cumulative sum and binary search to find the event
+        cumulative_rates = torch.cumsum(rates_flat, dim=0)
+        chosen_index = torch.searchsorted(
+            cumulative_rates, torch.tensor([random_value])
+        ).item()
 
         # Convert the flat index back into 3D index
         # convert the flat index back into 3D index using numpy.unravel_index because torch.unravel_index is not implemented yet
@@ -110,7 +136,7 @@ class Simulation:
 
         return Event(event_type, x, y)
 
-    def perform_event(self, event: Event) -> None:
+    def perform_event(self, event: Event) -> List[tuple]:
         """
         Execute the specified event on the lattice.
 
@@ -125,8 +151,10 @@ class Simulation:
         if event.is_reorientation():
             orientation = Orientation(event.etype.value)
             self.lattice.reorient_particle(event.x, event.y, orientation)
+            return [(event.x, event.y)]
         elif event.is_migration():
-            self.lattice.move_particle(event.x, event.y)
+            new_pos = self.lattice.move_particle(event.x, event.y)
+            return [(event.x, event.y)] + new_pos
         else:
             raise ValueError(f"Unrecognized event type: {event.etype}")
 
@@ -139,8 +167,9 @@ class Simulation:
         delta_t = self.next_event_time()
         self.t += delta_t
         event = self.choose_event()
-        self.perform_event(event)
-        self.update_rates()
+        affected_sites = self.perform_event(event)
+        # self.update_rates(affected_sites)
+        self.initialize_rates()
         info = f"t = {self.t:.3f}, event = {event.etype}, x = {event.x}, y = {event.y}"
         info_dict = {
             "dt": delta_t,
