@@ -4,7 +4,7 @@ from typing import Optional, Tuple
 from lvmc.core.particle_lattice import ParticleLattice, Orientation
 from lvmc.core.magnetic_field import MagneticField
 from enum import Enum, auto
-from typing import NamedTuple,List 
+from typing import NamedTuple, List
 
 
 class EventType(Enum):
