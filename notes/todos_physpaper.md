@@ -3,7 +3,7 @@
 ## Main messages
 - Extension of the lattice approach to channel geometry and to situations where there is a fluid flow. This includes a clear description of interactions with obstacles and of the modelling of the effects of the fluid flow in terms of rates.
 - Characterization of the different phases, depending on alignment sensitivity $g$ and on the flow velocity $v_1/v_0$. (Mainly Fig. 6 left of December notes.) Possibly introducing new order parameters or measurements (flux, density).
-- Relevance of a lattice approach and of a dynamics in terms of rates in order to describe actual swimmers? (Dependence on resolution, possible comparisons with particle approaches.) Time averages vs. averages over events.
+- Relevance of a lattice approach and of a dynamics in terms of rates in order to describe actual swimmers? (Dependence on resolution, possible comparisons with particle approaches.) Time averages vs. averages over events. CC:(the state change of the lattice is a discrete event but the dynamics is defined in continuous-time (this is what the Gillespie algorithm does; it simulates a continuous-time markov process). Thus, I think we should work with time-averages.)
 - Effect of periodicty on approximating an infinite channel with periodic boundary conditions. This could be a way to convey the message that the organization in bands observed for active systems is often a consequence of periodicity. Interpretation in terms of correlation lengths and time of convergence to a statistical steady state.
 
 ## TODOs
