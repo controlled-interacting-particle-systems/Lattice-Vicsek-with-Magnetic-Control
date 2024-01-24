@@ -46,6 +46,8 @@ class ParticleLattice:
         )
         self.obstacles = torch.zeros((height, width), dtype=torch.bool, device=device)
         self.sinks = torch.zeros((height, width), dtype=torch.bool, device=device)
+        # Initialize an array to store orientations of particles
+        self.orientation_map = np.full((height, width), None)  # None indicates no particle
 
         # Particle tracking
         self.id_to_position = {}  # Dictionary to track particles
@@ -275,11 +277,12 @@ class ParticleLattice:
         # Validate that orientation is an instance of Orientation
         if not isinstance(orientation, Orientation):
             raise ValueError("orientation must be an instance of Orientation enum.")
-
+        
         # Validate that the specified cell is available for particle movement
         self._validate_availability(x, y)
 
         self.particles[orientation.value, y, x] = True  # Add particle to the lattice
+        self.orientation_map[y, x] = orientation
 
         self._update_tracking(
             self.next_particle_id, x, y
@@ -304,21 +307,12 @@ class ParticleLattice:
 
         :param x: x-coordinate of the particle.
         :param y: y-coordinate of the particle.
-        :return: The orientation of the particle as an Orientation enum instance.
-        :raises ValueError: If no particle is found at the given location.
+        :return: The orientation of the particle as an Orientation enum instance. None if no particle is found.
         """
         self._validate_occupancy(
             x, y
-        )  # If no particle is found at the given location, raise a value error
-
-        # Get the orientation of the particle
-        orientation_index = self.particles[:, y, x].nonzero(as_tuple=True)[0].item()
-
-        # Convert the index to an Orientation enum
-        try:
-            return Orientation(orientation_index)
-        except ValueError:
-            raise ValueError(f"Invalid orientation index found: {orientation_index}")
+        )
+        return self.orientation_map[y, x]
 
     def move_particle(self, x: int, y: int) -> List[tuple]:
         """
@@ -347,6 +341,10 @@ class ParticleLattice:
         self.particles[orientation.value, new_y, new_x] = True
 
         self._update_tracking(particle_id, new_x, new_y)
+
+        # Update the orientation map
+        self.orientation_map[y, x] = None
+        self.orientation_map[new_y, new_x] = orientation
 
         return [(new_x, new_y)]
 
@@ -392,19 +390,13 @@ class ParticleLattice:
             raise ValueError(
                 f"{new_orientation=} must be an instance of Orientation enum."
             )
-
-        # Get the current orientation of the particle at (x, y)
+        
         current_orientation = self.get_particle_orientation(x, y)
 
-        # If the new orientation is the same as the current one, return False
-        if current_orientation == new_orientation:
-            return False
-
-        # Reorient the particle
-        self.remove_particle(x, y)
-        self.add_particle(x, y, new_orientation)
-
-        return True
+        # Update the orientation in the particles tensor and orientation_map
+        self.particles[current_orientation.value, y, x] = False
+        self.particles[new_orientation.value, y, x] = True
+        self.orientation_map[y, x] = new_orientation
 
     ##################################
     ## Obstacle and sink management ##
