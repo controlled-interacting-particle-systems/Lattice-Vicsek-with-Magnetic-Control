@@ -55,6 +55,14 @@ class ParticleLattice:
         # Initialize the lattice with particles at a given density.
         self._initialize_lattice(density)
 
+        # Precompute deltas for each orientation
+        self.orientation_deltas = {
+            Orientation.UP: (0, -1),
+            Orientation.DOWN: (0, 1),
+            Orientation.LEFT: (-1, 0),
+            Orientation.RIGHT: (1, 0),
+        }
+
     def _initialize_lattice(self, density: float) -> None:
         """
         Initialize the lattice with particles at a given density.
@@ -144,18 +152,10 @@ class ParticleLattice:
         self._validate_occupancy(x, y)
 
         # Calculate new position based on orientation
-        if orientation == Orientation.UP:
-            new_x, new_y = x, (y - 1) % self.height
-        elif orientation == Orientation.DOWN:
-            new_x, new_y = x, (y + 1) % self.height
-        elif orientation == Orientation.LEFT:
-            new_x, new_y = (x - 1) % self.width, y
-        elif orientation == Orientation.RIGHT:
-            new_x, new_y = (x + 1) % self.width, y
-        else:
-            raise ValueError("Invalid orientation index.")
+        delta_x, delta_y = self.orientation_deltas[orientation]
+        new_x, new_y = (x + delta_x) % self.width, (y + delta_y) % self.height
+        return new_x, new_y
 
-        return (new_x, new_y)
 
     def _is_obstacle(self, x: int, y: int) -> bool:
         """
