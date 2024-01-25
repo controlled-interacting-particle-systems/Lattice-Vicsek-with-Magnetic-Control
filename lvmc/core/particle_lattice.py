@@ -48,6 +48,7 @@ class ParticleLattice:
         self.sinks = torch.zeros((height, width), dtype=torch.bool, device=device)
         # Initialize an array to store orientations of particles
         self.orientation_map = np.full((height, width), None)  # None indicates no particle
+        self.occupancy_map = torch.zeros((height, width), dtype=torch.bool, device=device)
 
         # Particle tracking
         self.id_to_position = {}  # Dictionary to track particles
@@ -127,7 +128,7 @@ class ParticleLattice:
         :param y: y-coordinate of the lattice.
         :return: True if the no particle is present at the cell, False otherwise.
         """
-        return not self.particles[:, y, x].any()
+        return not self.occupancy_map[y, x]
 
     def _get_target_position(self, x: int, y: int, orientation) -> tuple:
         """
@@ -283,6 +284,7 @@ class ParticleLattice:
 
         self.particles[orientation.value, y, x] = True  # Add particle to the lattice
         self.orientation_map[y, x] = orientation
+        self.occupancy_map[y, x] = True
 
         self._update_tracking(
             self.next_particle_id, x, y
@@ -300,6 +302,8 @@ class ParticleLattice:
         # Validate coordinates
         self._validate_coordinates(x, y)
         self.particles[:, y, x] = False  # Remove particle from all orientations
+        self.orientation_map[y, x] = None
+        self.occupancy_map[y, x] = False
 
     def get_particle_orientation(self, x: int, y: int) -> Orientation:
         """
@@ -345,6 +349,9 @@ class ParticleLattice:
         # Update the orientation map
         self.orientation_map[y, x] = None
         self.orientation_map[new_y, new_x] = orientation
+        # Update the occupancy map
+        self.occupancy_map[y, x] = False
+        self.occupancy_map[new_y, new_x] = True
 
         return [(new_x, new_y)]
 
