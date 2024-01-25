@@ -259,7 +259,7 @@ class ParticleLattice:
         )  # Count occupied cells
         total_cells = self.width * self.height
         return num_occupied_cells / total_cells if total_cells > 0 else 0
-    
+    @property
     def n_particles(self):
         return self.particles.sum().item()
 
