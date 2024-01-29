@@ -558,12 +558,12 @@ def test_reorient_particle():
     with pytest.raises(ValueError):
         lattice.reorient_particle(0, 0, Orientation.UP)
 
+
 def test_transport_particle():
     lattice = ParticleLattice(width=10, height=10)
     x, y = 5, 5
     original_orientation = Orientation(np.random.choice(list(Orientation)))
     lattice.add_particle(x, y, original_orientation)
-
 
     # Choose a new orientation different from the original
     new_orientations = list(set(Orientation) - {original_orientation})
@@ -575,7 +575,7 @@ def test_transport_particle():
     lattice.transport_particle(x, y, direction)
     assert lattice._is_empty(x, y)
     # Check that the new position is not empty
- 
+
     assert not lattice._is_empty(x_new, y_new)
 
     # Check that the orientation of the particle is correct

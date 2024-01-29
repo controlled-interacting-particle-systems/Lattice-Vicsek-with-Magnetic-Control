@@ -13,7 +13,6 @@ g = 2.0  # Alignment sensitivity
 v0 = 100.0  # Base transition rate
 
 
-
 def test_basic_data_collection():
     simulation = Simulation(g, v0, **lattice_params)
     data_collector = DataCollector(simulation)
