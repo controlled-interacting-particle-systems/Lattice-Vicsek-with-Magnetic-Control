@@ -164,8 +164,8 @@ class Simulation:
 
         :return: An Optional tuple (event_type, x, y) representing the event, or None.
         """
-        delta_t = self.next_event_time()
-        self.t += delta_t
+        self.delta_t = self.next_event_time()
+        self.t += self.delta_t
         event = self.choose_event()
         affected_sites = self.perform_event(event)
         # self.update_rates(affected_sites)
