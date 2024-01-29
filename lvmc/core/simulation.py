@@ -172,11 +172,13 @@ class Simulation:
         self.initialize_rates()
         return event
 
-    def apply_magnetic_field(self) -> None:
+    def apply_magnetic_field(self, direction: int = 0) -> None:
         """
         Apply the magnetic field to the lattice.
         """
+        self.magnetic_field.set_direction(direction)
         self.magnetic_field.apply(self.lattice)
+        self.initialize_rates()
 
     def get_magnetic_field_state(self) -> int:
         """
