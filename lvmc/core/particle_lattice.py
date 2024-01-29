@@ -608,7 +608,8 @@ class ParticleLattice:
         if self._is_empty(x, y):
             return 0.0
         # Get the coordinates of the target cell
-        new_x, new_y = self._get_target_position(x, y)
+        orientation = self.get_particle_orientation(x, y)
+        new_x, new_y = self._get_target_position(x, y, orientation)
 
         # Check if the target cell is empty
         if self._is_empty(new_x, new_y):
