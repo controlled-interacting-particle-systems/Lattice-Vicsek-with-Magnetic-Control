@@ -47,8 +47,12 @@ class ParticleLattice:
         self.obstacles = torch.zeros((height, width), dtype=torch.bool, device=device)
         self.sinks = torch.zeros((height, width), dtype=torch.bool, device=device)
         # Initialize an array to store orientations of particles
-        self.orientation_map = np.full((height, width), None)  # None indicates no particle
-        self.occupancy_map = torch.zeros((height, width), dtype=torch.bool, device=device)
+        self.orientation_map = np.full(
+            (height, width), None
+        )  # None indicates no particle
+        self.occupancy_map = torch.zeros(
+            (height, width), dtype=torch.bool, device=device
+        )
 
         # Particle tracking
         self.id_to_position = {}  # Dictionary to track particles
@@ -158,7 +162,6 @@ class ParticleLattice:
         delta_x, delta_y = self.orientation_deltas[orientation]
         new_x, new_y = (x + delta_x) % self.width, (y + delta_y) % self.height
         return new_x, new_y
-
 
     def _is_obstacle(self, x: int, y: int) -> bool:
         """
@@ -321,9 +324,7 @@ class ParticleLattice:
         :param y: y-coordinate of the particle.
         :return: The orientation of the particle as an Orientation enum instance. None if no particle is found.
         """
-        self._validate_occupancy(
-            x, y
-        )
+        self._validate_occupancy(x, y)
         return self.orientation_map[y, x]
 
     def move_particle(self, x: int, y: int) -> List[tuple]:
@@ -405,7 +406,7 @@ class ParticleLattice:
             raise ValueError(
                 f"{new_orientation=} must be an instance of Orientation enum."
             )
-        
+
         current_orientation = self.get_particle_orientation(x, y)
 
         # Update the orientation in the particles tensor and orientation_map
