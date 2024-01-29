@@ -67,7 +67,7 @@ class Simulation:
         :param orientation: The orientation of the particle.
         """
         self.lattice.add_particle(x, y, orientation)
-        self.initialize_rates()
+        self.update_rates()
 
     def initialize_rates(self) -> None:
         """
@@ -183,7 +183,7 @@ class Simulation:
         event = self.choose_event()
         affected_sites = self.perform_event(event)
         # self.update_rates(affected_sites)
-        self.initialize_rates()
+        self.update_rates()
         return event
 
     def apply_magnetic_field(self, direction: int = 0) -> None:
@@ -192,7 +192,7 @@ class Simulation:
         """
         self.magnetic_field.set_direction(direction)
         self.magnetic_field.apply(self.lattice)
-        self.initialize_rates()
+        self.update_rates()
 
     def get_magnetic_field_state(self) -> int:
         """
