@@ -58,6 +58,17 @@ class Simulation:
         # Initialize time
         self.t = 0.0
 
+    def add_particle(self, x: int, y: int, orientation: Orientation = None) -> None:
+        """
+        Add a particle at the specified location.
+
+        :param x: The x-coordinate of the location.
+        :param y: The y-coordinate of the location.
+        :param orientation: The orientation of the particle.
+        """
+        self.lattice.add_particle(x, y, orientation)
+        self.initialize_rates()
+
     def initialize_rates(self) -> None:
         """
         Initialize the rates tensor.
