@@ -77,10 +77,13 @@ class Simulation:
         self.rates[:n_orientations] = self.lattice.compute_tr(self.g)
         self.rates[n_orientations] = self.lattice.compute_tm(self.v0)
 
-    def update_rates(self, positions: list) -> None:
+    def update_rates(self, positions: list[Optional] = None) -> None:
         """
         Update the rates tensor based on the current state of the lattice.
         """
+        if positions is None:
+            self._initialize_rates()
+            return
         n_orientations = len(Orientation)
         # compute a list of the neighbours of positions
         affected_cells = positions
