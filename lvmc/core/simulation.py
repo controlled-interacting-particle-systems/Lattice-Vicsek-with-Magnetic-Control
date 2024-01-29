@@ -82,7 +82,7 @@ class Simulation:
         Update the rates tensor based on the current state of the lattice.
         """
         if positions is None:
-            self._initialize_rates()
+            self.initialize_rates()
             return
         n_orientations = len(Orientation)
         # compute a list of the neighbours of positions
