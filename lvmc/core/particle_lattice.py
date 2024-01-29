@@ -272,7 +272,7 @@ class ParticleLattice:
     ## Particle Manipulation Methods ##
     ###################################
 
-    def add_particle(self, x: int, y: int, orientation: Orientation) -> None:
+    def add_particle(self, x: int, y: int, orientation: Orientation = None) -> None:
         """
         Add a particle with a specific orientation at (x, y).
 
@@ -281,9 +281,12 @@ class ParticleLattice:
         :param orientation: Orientation of the particle, as an instance of the Orientation enum.
         """
         # Validate that orientation is an instance of Orientation
+        if orientation is None:
+            orientation = np.random.choice(list(Orientation))
+
         if not isinstance(orientation, Orientation):
             raise ValueError("orientation must be an instance of Orientation enum.")
-        
+
         # Validate that the specified cell is available for particle movement
         self._validate_availability(x, y)
 
