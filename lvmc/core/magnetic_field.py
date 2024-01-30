@@ -1,4 +1,5 @@
-from lvmc.core.particle_lattice import ParticleLattice  # for type hinting
+from lvmc.core.particle_lattice import ParticleLattice, Orientation  # for type hinting
+import numpy as np
 
 
 class MagneticField:
