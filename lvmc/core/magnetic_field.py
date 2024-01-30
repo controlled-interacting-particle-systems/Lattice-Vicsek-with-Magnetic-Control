@@ -11,9 +11,9 @@ class MagneticField:
         Initialize MagneticField with an initial direction.
 
         :param initial_direction: One of -1, 0, or 1
-            - -1: Counterclockwise
+            - -1: Clockwise
             - 0: None
-            - 1: Clockwise
+            - 1: Counterclockwise
         :type initial_direction: int
         """
         self.current_direction = initial_direction
