@@ -696,7 +696,9 @@ class ParticleLattice:
                     symbol = index_to_symbol[orientation_index]
                     row_str += symbol
                 row_str += " "  # Add space between cells
-            lattice_str += row_str + "\n"
+            lattice_str += row_str
+            if y < self.height - 1:
+                lattice_str += "\n"  # Add a newline character after each row except the last
 
         return lattice_str
 
