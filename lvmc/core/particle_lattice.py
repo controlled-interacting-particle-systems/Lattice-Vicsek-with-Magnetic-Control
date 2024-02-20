@@ -60,7 +60,7 @@ class ParticleLattice:
         self.next_particle_id = 0  # Counter to assign unique IDs to particles
 
         # Initialize the lattice with particles at a given density.
-        self._initialize_lattice(density)
+        self.populate_lattice(density)
 
         # Precompute deltas for each orientation
         self.orientation_deltas = {
@@ -70,7 +70,7 @@ class ParticleLattice:
             Orientation.RIGHT: (1, 0),
         }
 
-    def _initialize_lattice(self, density: float) -> None:
+    def populate_lattice(self, density: float) -> None:
         """
         Initialize the lattice with particles at a given density.
 
@@ -87,7 +87,7 @@ class ParticleLattice:
 
         for pos, ori in zip(positions, orientations):
             y, x = divmod(pos, self.width)  # Convert position to (x, y) coordinates
-            if not self._is_obstacle(x, y):
+            if not self._is_obstacle(x, y) and self._is_empty(x, y):
                 self.add_particle(x, y, ori)
 
     def get_params(self) -> dict:
