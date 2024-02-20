@@ -77,7 +77,6 @@ class Simulation:
         """
         n_added = self.lattice.populate(density)
         self.update_rates()
-        print(f"Lattice populated with {n_added} particles.")
 
     def initialize_rates(self) -> None:
         """
