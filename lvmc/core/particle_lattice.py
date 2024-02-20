@@ -344,16 +344,15 @@ class ParticleLattice:
         new_x, new_y = self._get_target_position(x, y, orientation)
 
         particle_id = self.position_to_particle_id.pop((x, y))
+        self._update_tracking(particle_id, new_x, new_y)
 
         if self._is_sink(new_x, new_y):
-            self.particles[orientation.value, y, x] = False
+            self.remove_particle(x, y)
             return []
 
         # Directly update the particle's position in the lattice
         self.particles[orientation.value, y, x] = False
         self.particles[orientation.value, new_y, new_x] = True
-
-        self._update_tracking(particle_id, new_x, new_y)
 
         # Update the orientation map
         self.orientation_map[y, x] = None
