@@ -312,7 +312,7 @@ class ParticleLattice:
         """
         # Validate coordinates
         self._validate_coordinates(x, y)
-        self.particles[:, y, x] = False  # Remove particle from all orientations
+        self.particles[self.orientation_map[y, x].value, y, x] = False  
         self.orientation_map[y, x] = None
         self.occupancy_map[y, x] = False
 
