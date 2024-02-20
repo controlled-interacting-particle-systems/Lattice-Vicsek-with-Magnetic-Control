@@ -60,7 +60,7 @@ class ParticleLattice:
         self.next_particle_id = 0  # Counter to assign unique IDs to particles
 
         # Initialize the lattice with particles at a given density.
-        self.populate_lattice(density)
+        self.populate(density)
 
         # Precompute deltas for each orientation
         self.orientation_deltas = {
@@ -70,11 +70,12 @@ class ParticleLattice:
             Orientation.RIGHT: (1, 0),
         }
 
-    def populate_lattice(self, density: float) -> None:
+    def populate(self, density: float) -> int:
         """
         Initialize the lattice with particles at a given density.
 
         :param density: Density of particles to be initialized.
+        :return: The number of particles added to the lattice.
         """
         num_cells = self.width * self.height
         num_particles = int(density * num_cells)
@@ -85,10 +86,14 @@ class ParticleLattice:
         # Generate random orientations using the Orientation enum
         orientations = np.random.choice(list(Orientation), num_particles)
 
+        n_added = 0
+
         for pos, ori in zip(positions, orientations):
             y, x = divmod(pos, self.width)  # Convert position to (x, y) coordinates
             if not self._is_obstacle(x, y) and self._is_empty(x, y):
                 self.add_particle(x, y, ori)
+                n_added += 1
+        return n_added
 
     def get_params(self) -> dict:
         """
@@ -312,7 +317,7 @@ class ParticleLattice:
         """
         # Validate coordinates
         self._validate_coordinates(x, y)
-        self.particles[self.orientation_map[y, x].value, y, x] = False  
+        self.particles[self.orientation_map[y, x].value, y, x] = False
         self.orientation_map[y, x] = None
         self.occupancy_map[y, x] = False
 
@@ -697,7 +702,9 @@ class ParticleLattice:
                 row_str += " "  # Add space between cells
             lattice_str += row_str
             if y < self.height - 1:
-                lattice_str += "\n"  # Add a newline character after each row except the last
+                lattice_str += (
+                    "\n"  # Add a newline character after each row except the last
+                )
 
         return lattice_str
 

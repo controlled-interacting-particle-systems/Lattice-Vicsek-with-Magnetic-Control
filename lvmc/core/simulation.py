@@ -69,6 +69,16 @@ class Simulation:
         self.lattice.add_particle(x, y, orientation)
         self.update_rates()
 
+    def populate_lattice(self, density: float) -> None:
+        """
+        Populate the lattice with particles.
+
+        :param density: The density of the particles.
+        """
+        n_added = self.lattice.populate(density)
+        self.update_rates()
+        print(f"Lattice populated with {n_added} particles.")
+
     def initialize_rates(self) -> None:
         """
         Initialize the rates tensor.

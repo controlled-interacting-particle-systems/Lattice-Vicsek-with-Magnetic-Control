@@ -72,10 +72,10 @@ def test_set_sink_outside_bounds():
         lattice.set_sink(x, y)
 
 
-def test_populate_lattice():
+def test_populate():
     lattice = ParticleLattice(width=10, height=10)
     density = 0.5
-    lattice.populate_lattice(density)
+    lattice.populate(density)
     populated_cells = torch.sum(lattice.particles).item()
     expected_cells = int(density * lattice.width * lattice.height)
     assert populated_cells == expected_cells
@@ -153,7 +153,7 @@ def test_remove_particle_outside_bounds():
 
 def test_query_lattice_state():
     lattice = ParticleLattice(width=10, height=10)
-    lattice.populate_lattice(density=0.5)
+    lattice.populate(density=0.5)
     lattice_state = lattice.query_lattice_state()
     assert lattice_state.size() == (
         lattice.NUM_ORIENTATIONS,
