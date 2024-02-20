@@ -90,9 +90,11 @@ class ParticleLattice:
 
         for pos, ori in zip(positions, orientations):
             y, x = divmod(pos, self.width)  # Convert position to (x, y) coordinates
-            if not self._is_obstacle(x, y) and self._is_empty(x, y):
-                self.add_particle(x, y, ori)
-                n_added += 1
+            while self._is_obstacle(x, y) or not self._is_empty(x, y):
+                pos = np.random.choice(num_cells)
+                y, x = divmod(pos, self.width)
+            self.add_particle(x, y, ori)
+            n_added += 1
         return n_added
 
     def get_params(self) -> dict:
