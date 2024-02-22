@@ -186,7 +186,7 @@ class Simulation:
             event_type_index, y, x = np.unravel_index(chosen_index, self.rates.shape)
             # No need to move back since we're on CPU
 
-        event_type = EventType(event_type_index.item())
+        event_type = EventType(event_type_index)
 
         return Event(event_type, x, y)
 
