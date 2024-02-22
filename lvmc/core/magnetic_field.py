@@ -35,7 +35,7 @@ class MagneticField:
         :type lattice: ParticleLattice
         """
         # Rotate the lattice by 90 degrees in the prescribed direction, using numpy.roll
-        lattice.particles[...] = lattice.particles.roll(self.current_direction, dims=0) 
+        lattice.particles[...] = lattice.particles.roll(self.current_direction, dims=0)
 
         # Function to safely get the value from an Orientation or return a placeholder
         def get_orientation_value(orientation):
