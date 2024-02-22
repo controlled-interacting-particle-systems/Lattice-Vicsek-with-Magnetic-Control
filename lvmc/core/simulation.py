@@ -163,7 +163,7 @@ class Simulation:
         # Use cumulative sum and binary search to find the event
         cumulative_rates = torch.cumsum(rates_flat, dim=0)
         chosen_index = torch.searchsorted(
-            cumulative_rates, torch.tensor([random_value]),
+            cumulative_rates, random_value.to(device),
             
         ).item()
 
