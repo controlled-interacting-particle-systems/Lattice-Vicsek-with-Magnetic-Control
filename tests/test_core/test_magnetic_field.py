@@ -2,6 +2,7 @@ import pytest
 from lvmc.core.particle_lattice import ParticleLattice, Orientation
 from lvmc.core.magnetic_field import MagneticField
 
+
 class TestMagneticField:
     @pytest.fixture
     def lattice(self):
