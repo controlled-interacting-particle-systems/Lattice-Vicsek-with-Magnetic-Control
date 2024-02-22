@@ -4,6 +4,8 @@ import numpy as np
 import warnings
 from enum import Enum
 from typing import List, Tuple, Optional, Union
+import copy
+
 
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -337,18 +339,23 @@ class ParticleLattice:
         :param n_particles: The number of particles to be added.
         :return: The number of particles added to the lattice.
         """
-        x1, y1, x2, y2 = region
+        x1, x2, y1, y2 = region
         if x1 < 0 or y1 < 0 or x2 >= self.width or y2 >= self.height:
-            raise ValueError("Region coordinates are out of lattice bounds.")
+            raise ValueError(f"Region coordinates {region} are out of lattice bounds.")
 
         n_added = 0
-        for _ in range(n_particles):
-            x = np.random.randint(x1, x2 + 1)
-            y = np.random.randint(y1, y2 + 1)
-            while not self._is_empty(x, y) or self._is_obstacle(x, y):
-                x = np.random.randint(x1, x2 + 1)
-                y = np.random.randint(y1, y2 + 1)
+        region_area = (x2 - x1 + 1) * (y2 - y1 + 1)
+        positions = np.random.choice(region_area, n_particles, replace=False)
+
+        for pos in positions:
+            y, x = divmod(pos, x2 - x1 + 1)
+            x, y = x + x1, y + y1
+            while self._is_obstacle(x, y) or not self._is_empty(x, y):
+                pos = np.random.choice(region_area)
+                y, x = divmod(pos, x2 - x1 + 1)
+                x, y = x + x1, y + y1
             self.add_particle(x, y, orientation)
+
             n_added += 1
         return n_added
 
@@ -788,3 +795,6 @@ class ParticleLattice:
         new_lattice.next_particle_id = 0
 
         return new_lattice
+
+    def copy(self):
+        return copy.deepcopy(self)
