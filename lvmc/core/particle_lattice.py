@@ -70,33 +70,6 @@ class ParticleLattice:
             Orientation.RIGHT: (1, 0),
         }
 
-    def populate(self, density: float) -> int:
-        """
-        Initialize the lattice with particles at a given density.
-
-        :param density: Density of particles to be initialized.
-        :return: The number of particles added to the lattice.
-        """
-        num_cells = self.width * self.height
-        num_particles = int(density * num_cells)
-
-        # Randomly place particles
-        positions = np.random.choice(num_cells, num_particles, replace=False)
-
-        # Generate random orientations using the Orientation enum
-        orientations = np.random.choice(list(Orientation), num_particles)
-
-        n_added = 0
-
-        for pos, ori in zip(positions, orientations):
-            y, x = divmod(pos, self.width)  # Convert position to (x, y) coordinates
-            while self._is_obstacle(x, y) or not self._is_empty(x, y):
-                pos = np.random.choice(num_cells)
-                y, x = divmod(pos, self.width)
-            self.add_particle(x, y, ori)
-            n_added += 1
-        return n_added
-
     def get_params(self) -> dict:
         """
         Get the parameters of the lattice.
@@ -267,7 +240,7 @@ class ParticleLattice:
         num_occupied_cells = (
             self.particles.any(dim=0).sum().item()
         )  # Count occupied cells
-        total_cells = self.width * self.height
+        total_cells = self.width * self.height - self.obstacles.sum().item()
         return num_occupied_cells / total_cells if total_cells > 0 else 0
 
     @property
@@ -322,6 +295,62 @@ class ParticleLattice:
         self.particles[self.orientation_map[y, x].value, y, x] = False
         self.orientation_map[y, x] = None
         self.occupancy_map[y, x] = False
+
+    def populate(self, density: float) -> int:
+        """
+        Initialize the lattice with particles at a given density.
+
+        :param density: Density of particles to be initialized.
+        :return: The number of particles added to the lattice.
+        """
+        num_cells = self.width * self.height
+        num_particles = int(density * num_cells)
+
+        # Randomly place particles
+        positions = np.random.choice(num_cells, num_particles, replace=False)
+
+        # Generate random orientations using the Orientation enum
+        orientations = np.random.choice(list(Orientation), num_particles)
+
+        n_added = 0
+
+        for pos, ori in zip(positions, orientations):
+            y, x = divmod(pos, self.width)  # Convert position to (x, y) coordinates
+            while self._is_obstacle(x, y) or not self._is_empty(x, y):
+                pos = np.random.choice(num_cells)
+                y, x = divmod(pos, self.width)
+            self.add_particle(x, y, ori)
+            n_added += 1
+        return n_added
+
+    def add_particle_flux(
+        self,
+        region: Tuple[int, int, int, int],
+        orientation: Orientation,
+        n_particles: int,
+    ) -> int:
+        """
+        Add a particle flux to the lattice.
+
+        :param region: A tuple of (x1, y1, x2, y2) representing the region where particles will be added.
+        :param orientation: The orientation of the particles.
+        :param n_particles: The number of particles to be added.
+        :return: The number of particles added to the lattice.
+        """
+        x1, y1, x2, y2 = region
+        if x1 < 0 or y1 < 0 or x2 >= self.width or y2 >= self.height:
+            raise ValueError("Region coordinates are out of lattice bounds.")
+
+        n_added = 0
+        for _ in range(n_particles):
+            x = np.random.randint(x1, x2 + 1)
+            y = np.random.randint(y1, y2 + 1)
+            while not self._is_empty(x, y) or self._is_obstacle(x, y):
+                x = np.random.randint(x1, x2 + 1)
+                y = np.random.randint(y1, y2 + 1)
+            self.add_particle(x, y, orientation)
+            n_added += 1
+        return n_added
 
     def get_particle_orientation(self, x: int, y: int) -> Orientation:
         """

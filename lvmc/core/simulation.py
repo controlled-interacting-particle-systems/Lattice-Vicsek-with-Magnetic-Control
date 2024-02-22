@@ -69,6 +69,22 @@ class Simulation:
         self.lattice.add_particle(x, y, orientation)
         self.update_rates()
 
+    def add_particle_flux(
+        self,
+        region: Tuple[int, int, int, int],
+        orientation: Orientation,
+        n_particles: int,
+    ) -> None:
+        """
+        Add a particle flux to the lattice.
+
+        :param region: A tuple (x1, y1, x2, y2) representing the region where the particles will be added.
+        :param orientation: The orientation of the particles.
+        :param n_particles: The number of particles to be added.
+        """
+        self.lattice.add_particle_flux(region, orientation, n_particles)
+        self.update_rates()
+
     def populate_lattice(self, density: float) -> None:
         """
         Populate the lattice with particles.
