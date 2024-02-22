@@ -60,7 +60,7 @@ def test_set_obstacle_outside_bounds():
     lattice = ParticleLattice(width=10, height=10)
     # Coordinates outside the lattice bounds
     x, y = 11, 11
-    with pytest.raises(ValueError):
+    with pytest.raises(IndexError):
         lattice.set_obstacle(x, y)
 
 
@@ -68,14 +68,14 @@ def test_set_sink_outside_bounds():
     lattice = ParticleLattice(width=10, height=10)
     # Coordinates outside the lattice bounds
     x, y = 11, 11
-    with pytest.raises(ValueError):
+    with pytest.raises(IndexError):
         lattice.set_sink(x, y)
 
 
-def test__initialize_lattice():
+def test_populate():
     lattice = ParticleLattice(width=10, height=10)
     density = 0.5
-    lattice._initialize_lattice(density)
+    lattice.populate(density)
     populated_cells = torch.sum(lattice.particles).item()
     expected_cells = int(density * lattice.width * lattice.height)
     assert populated_cells == expected_cells
@@ -153,7 +153,7 @@ def test_remove_particle_outside_bounds():
 
 def test_query_lattice_state():
     lattice = ParticleLattice(width=10, height=10)
-    lattice._initialize_lattice(density=0.5)
+    lattice.populate(density=0.5)
     lattice_state = lattice.query_lattice_state()
     assert lattice_state.size() == (
         lattice.NUM_ORIENTATIONS,
@@ -290,6 +290,10 @@ def test_compute_tr_with_obstacles_and_sinks():
 def test_get_target_position():
     lattice = ParticleLattice(width=10, height=10)
     x, y = 5, 5
+
+    # Add a particle to the lattice in the cell (x,y)
+    orientation = np.random.choice(list(Orientation))
+    lattice.add_particle(x, y, orientation)
 
     # Check if the target position is correct for each orientation
     # 1. Up
@@ -553,3 +557,55 @@ def test_reorient_particle():
     # Attempt to reorient a non-existent particle
     with pytest.raises(ValueError):
         lattice.reorient_particle(0, 0, Orientation.UP)
+
+
+def test_transport_particle():
+    lattice = ParticleLattice(width=10, height=10)
+    x, y = 5, 5
+    original_orientation = Orientation(np.random.choice(list(Orientation)))
+    lattice.add_particle(x, y, original_orientation)
+
+    # Choose a new orientation different from the original
+    new_orientations = list(set(Orientation) - {original_orientation})
+    direction = np.random.choice(new_orientations)
+
+    # Get the target position
+    x_new, y_new = lattice._get_target_position(x, y, direction)
+
+    lattice.transport_particle(x, y, direction)
+    assert lattice._is_empty(x, y)
+    # Check that the new position is not empty
+
+    assert not lattice._is_empty(x_new, y_new)
+
+    # Check that the orientation of the particle is correct
+    assert lattice.get_particle_orientation(x_new, y_new) == original_orientation
+
+
+def test_compute_log_tr_obstacles():
+    lattice = ParticleLattice(width=10, height=10)
+    x, y = 5, 5
+    orientation = np.random.choice(list(Orientation))
+    lattice.add_particle(x, y, orientation)
+
+    # Get the target position
+    x_new, y_new = lattice._get_target_position(x, y, orientation)
+
+    # Add an obstacle at the target position
+    lattice.set_obstacle(x_new, y_new)
+
+    # Compute the log transition rate term corresponding to the obstacle
+    log_tr = lattice.compute_log_tr_obstacles()
+
+    up_down_log_rates = 0.5 * torch.tensor([0.0, 1.0, 0.0, 1.0])
+    left_right_log_rates = 0.5 * torch.tensor([1.0, 0.0, 1.0, 0.0])
+    if orientation == Orientation.UP or orientation == Orientation.DOWN:
+        assert torch.allclose(log_tr[:, y, x], up_down_log_rates)
+    else:
+        assert torch.allclose(log_tr[:, y, x], left_right_log_rates)
+
+    # Check that all other x,y entries are zero
+    for x in range(lattice.width):
+        for y in range(lattice.height):
+            if x != x_new and y != y_new:
+                assert log_tr[:, y, x].sum() == 0.0

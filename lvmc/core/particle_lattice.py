@@ -4,6 +4,8 @@ import numpy as np
 import warnings
 from enum import Enum
 from typing import List, Tuple, Optional, Union
+import copy
+
 
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -46,6 +48,13 @@ class ParticleLattice:
         )
         self.obstacles = torch.zeros((height, width), dtype=torch.bool, device=device)
         self.sinks = torch.zeros((height, width), dtype=torch.bool, device=device)
+        # Initialize an array to store orientations of particles
+        self.orientation_map = np.full(
+            (height, width), None
+        )  # None indicates no particle
+        self.occupancy_map = torch.zeros(
+            (height, width), dtype=torch.bool, device=device
+        )
 
         # Particle tracking
         self.id_to_position = {}  # Dictionary to track particles
@@ -53,27 +62,15 @@ class ParticleLattice:
         self.next_particle_id = 0  # Counter to assign unique IDs to particles
 
         # Initialize the lattice with particles at a given density.
-        self._initialize_lattice(density)
+        self.populate(density)
 
-    def _initialize_lattice(self, density: float) -> None:
-        """
-        Initialize the lattice with particles at a given density.
-
-        :param density: Density of particles to be initialized.
-        """
-        num_cells = self.width * self.height
-        num_particles = int(density * num_cells)
-
-        # Randomly place particles
-        positions = np.random.choice(num_cells, num_particles, replace=False)
-
-        # Generate random orientations using the Orientation enum
-        orientations = np.random.choice(list(Orientation), num_particles)
-
-        for pos, ori in zip(positions, orientations):
-            y, x = divmod(pos, self.width)  # Convert position to (x, y) coordinates
-            if not self._is_obstacle(x, y):
-                self.add_particle(x, y, ori)
+        # Precompute deltas for each orientation
+        self.orientation_deltas = {
+            Orientation.UP: (0, -1),
+            Orientation.DOWN: (0, 1),
+            Orientation.LEFT: (-1, 0),
+            Orientation.RIGHT: (1, 0),
+        }
 
     def get_params(self) -> dict:
         """
@@ -102,7 +99,7 @@ class ParticleLattice:
         """
 
         if x < 0 or x >= self.width or y < 0 or y >= self.height:
-            raise ValueError(f"Coordinates ({x}, {y}) are out of lattice bounds.")
+            raise IndexError(f"Coordinates ({x}, {y}) are out of lattice bounds.")
 
     def _create_index_to_symbol_mapping(self) -> dict:
         """
@@ -125,7 +122,7 @@ class ParticleLattice:
         :param y: y-coordinate of the lattice.
         :return: True if the no particle is present at the cell, False otherwise.
         """
-        return not self.particles[:, y, x].any()
+        return not self.occupancy_map[y, x]
 
     def _get_target_position(self, x: int, y: int, orientation) -> tuple:
         """
@@ -144,18 +141,9 @@ class ParticleLattice:
         self._validate_occupancy(x, y)
 
         # Calculate new position based on orientation
-        if orientation == Orientation.UP:
-            new_x, new_y = x, (y - 1) % self.height
-        elif orientation == Orientation.DOWN:
-            new_x, new_y = x, (y + 1) % self.height
-        elif orientation == Orientation.LEFT:
-            new_x, new_y = (x - 1) % self.width, y
-        elif orientation == Orientation.RIGHT:
-            new_x, new_y = (x + 1) % self.width, y
-        else:
-            raise ValueError("Invalid orientation index.")
-
-        return (new_x, new_y)
+        delta_x, delta_y = self.orientation_deltas[orientation]
+        new_x, new_y = (x + delta_x) % self.width, (y + delta_y) % self.height
+        return new_x, new_y
 
     def _is_obstacle(self, x: int, y: int) -> bool:
         """
@@ -186,7 +174,7 @@ class ParticleLattice:
         bool: True if the cell is a sink, False otherwise.
 
         Raises:
-        ValueError: If the coordinates are out of the lattice bounds.
+        IndexError: If the coordinates are out of the lattice bounds.
         """
         self._validate_coordinates(x, y)
         return self.sinks[y, x] == 1
@@ -200,7 +188,7 @@ class ParticleLattice:
         y (int): y-coordinate of the cell in the lattice.
 
         Raises:
-        ValueError: If the coordinates are out of the lattice bounds.
+        IndexError: If the coordinates are out of the lattice bounds.
         ValueError: If the specified cell is an obstacle.
         ValueError: If the specified cell is a non-empty.
         """
@@ -221,7 +209,7 @@ class ParticleLattice:
         y (int): y-coordinate of the cell in the lattice.
 
         Raises:
-        ValueError: If the coordinates are out of the lattice bounds.
+        IndexError: If the coordinates are out of the lattice bounds.
         ValueError: If the specified cell is empty.
         """
         if self.mode == "optimized":
@@ -254,14 +242,22 @@ class ParticleLattice:
         num_occupied_cells = (
             self.particles.any(dim=0).sum().item()
         )  # Count occupied cells
-        total_cells = self.width * self.height
+        total_cells = self.width * self.height - self.obstacles.sum().item()
         return num_occupied_cells / total_cells if total_cells > 0 else 0
+
+    @property
+    def n_particles(self):
+        return self.particles.sum().item()
+
+    @property
+    def is_empty(self):
+        return torch.all(~self.occupancy_map)
 
     ###################################
     ## Particle Manipulation Methods ##
     ###################################
 
-    def add_particle(self, x: int, y: int, orientation: Orientation) -> None:
+    def add_particle(self, x: int, y: int, orientation: Orientation = None) -> None:
         """
         Add a particle with a specific orientation at (x, y).
 
@@ -270,6 +266,9 @@ class ParticleLattice:
         :param orientation: Orientation of the particle, as an instance of the Orientation enum.
         """
         # Validate that orientation is an instance of Orientation
+        if orientation is None:
+            orientation = np.random.choice(list(Orientation))
+
         if not isinstance(orientation, Orientation):
             raise ValueError("orientation must be an instance of Orientation enum.")
 
@@ -277,6 +276,8 @@ class ParticleLattice:
         self._validate_availability(x, y)
 
         self.particles[orientation.value, y, x] = True  # Add particle to the lattice
+        self.orientation_map[y, x] = orientation
+        self.occupancy_map[y, x] = True
 
         self._update_tracking(
             self.next_particle_id, x, y
@@ -293,7 +294,70 @@ class ParticleLattice:
         """
         # Validate coordinates
         self._validate_coordinates(x, y)
-        self.particles[:, y, x] = False  # Remove particle from all orientations
+        self.particles[self.orientation_map[y, x].value, y, x] = False
+        self.orientation_map[y, x] = None
+        self.occupancy_map[y, x] = False
+
+    def populate(self, density: float) -> int:
+        """
+        Initialize the lattice with particles at a given density.
+
+        :param density: Density of particles to be initialized.
+        :return: The number of particles added to the lattice.
+        """
+        num_cells = self.width * self.height
+        num_particles = int(density * num_cells)
+
+        # Randomly place particles
+        positions = np.random.choice(num_cells, num_particles, replace=False)
+
+        # Generate random orientations using the Orientation enum
+        orientations = np.random.choice(list(Orientation), num_particles)
+
+        n_added = 0
+
+        for pos, ori in zip(positions, orientations):
+            y, x = divmod(pos, self.width)  # Convert position to (x, y) coordinates
+            while self._is_obstacle(x, y) or not self._is_empty(x, y):
+                pos = np.random.choice(num_cells)
+                y, x = divmod(pos, self.width)
+            self.add_particle(x, y, ori)
+            n_added += 1
+        return n_added
+
+    def add_particle_flux(
+        self,
+        region: Tuple[int, int, int, int],
+        orientation: Orientation,
+        n_particles: int,
+    ) -> int:
+        """
+        Add a particle flux to the lattice.
+
+        :param region: A tuple of (x1, y1, x2, y2) representing the region where particles will be added.
+        :param orientation: The orientation of the particles.
+        :param n_particles: The number of particles to be added.
+        :return: The number of particles added to the lattice.
+        """
+        x1, x2, y1, y2 = region
+        if x1 < 0 or y1 < 0 or x2 >= self.width or y2 >= self.height:
+            raise ValueError(f"Region coordinates {region} are out of lattice bounds.")
+
+        n_added = 0
+        region_area = (x2 - x1 + 1) * (y2 - y1 + 1)
+        positions = np.random.choice(region_area, n_particles, replace=False)
+
+        for pos in positions:
+            y, x = divmod(pos, x2 - x1 + 1)
+            x, y = x + x1, y + y1
+            while self._is_obstacle(x, y) or not self._is_empty(x, y):
+                pos = np.random.choice(region_area)
+                y, x = divmod(pos, x2 - x1 + 1)
+                x, y = x + x1, y + y1
+            self.add_particle(x, y, orientation)
+
+            n_added += 1
+        return n_added
 
     def get_particle_orientation(self, x: int, y: int) -> Orientation:
         """
@@ -301,21 +365,10 @@ class ParticleLattice:
 
         :param x: x-coordinate of the particle.
         :param y: y-coordinate of the particle.
-        :return: The orientation of the particle as an Orientation enum instance.
-        :raises ValueError: If no particle is found at the given location.
+        :return: The orientation of the particle as an Orientation enum instance. None if no particle is found.
         """
-        self._validate_occupancy(
-            x, y
-        )  # If no particle is found at the given location, raise a value error
-
-        # Get the orientation of the particle
-        orientation_index = self.particles[:, y, x].nonzero(as_tuple=True)[0].item()
-
-        # Convert the index to an Orientation enum
-        try:
-            return Orientation(orientation_index)
-        except ValueError:
-            raise ValueError(f"Invalid orientation index found: {orientation_index}")
+        self._validate_occupancy(x, y)
+        return self.orientation_map[y, x]
 
     def move_particle(self, x: int, y: int) -> List[tuple]:
         """
@@ -333,21 +386,23 @@ class ParticleLattice:
         # Get the expected position of the particle
         new_x, new_y = self._get_target_position(x, y, orientation)
 
-        # get the id of the particle at (x, y)
-        particle_id = self.position_to_particle_id.pop((x, y), None)
+        particle_id = self.position_to_particle_id.pop((x, y))
+        self._update_tracking(particle_id, new_x, new_y)
 
-        self._update_tracking(
-            particle_id, new_x, new_y
-        )  # update the particle tracking dictionaries
-
-        # Check if the new position is a sink, if so remove the particle
         if self._is_sink(new_x, new_y):
             self.remove_particle(x, y)
             return []
 
-        # Update the particle's position in the lattice
-        self.remove_particle(x, y)
-        self.add_particle(new_x, new_y, orientation)
+        # Directly update the particle's position in the lattice
+        self.particles[orientation.value, y, x] = False
+        self.particles[orientation.value, new_y, new_x] = True
+
+        # Update the orientation map
+        self.orientation_map[y, x] = None
+        self.orientation_map[new_y, new_x] = orientation
+        # Update the occupancy map
+        self.occupancy_map[y, x] = False
+        self.occupancy_map[new_y, new_x] = True
 
         return [(new_x, new_y)]
 
@@ -394,18 +449,12 @@ class ParticleLattice:
                 f"{new_orientation=} must be an instance of Orientation enum."
             )
 
-        # Get the current orientation of the particle at (x, y)
         current_orientation = self.get_particle_orientation(x, y)
 
-        # If the new orientation is the same as the current one, return False
-        if current_orientation == new_orientation:
-            return False
-
-        # Reorient the particle
-        self.remove_particle(x, y)
-        self.add_particle(x, y, new_orientation)
-
-        return True
+        # Update the orientation in the particles tensor and orientation_map
+        self.particles[current_orientation.value, y, x] = False
+        self.particles[new_orientation.value, y, x] = True
+        self.orientation_map[y, x] = new_orientation
 
     ##################################
     ## Obstacle and sink management ##
@@ -552,42 +601,29 @@ class ParticleLattice:
             device=device,
         )
 
-        # name a variable for the alignment strength with obstacles
-        align_strength = 0.5
-        for shift in [-1, 1]:
-            log_tr_obstacles[Orientation.LEFT.value] = (
-                (
-                    self.particles[Orientation.UP.value]
-                    + self.particle[Orientation.DOWN.value]
-                )
-                * self.obstacles.roll(shifts=shift, dims=0)
-                * align_strength
-            )
-            log_tr_obstacles[Orientation.RIGHT.value] = (
-                (
-                    self.particles[Orientation.UP.value]
-                    + self.particle[Orientation.DOWN.value]
-                )
-                * self.obstacles.roll(shifts=shift, dims=0)
-                * align_strength
-            )
+        obstacle_interaction_strength = 0.5
 
-            log_tr_obstacles[Orientation.UP.value] = (
-                (
-                    self.particles[Orientation.RIGHT.value]
-                    + self.particle[Orientation.LEFT.value]
+        # Mapping of orientations to their perpendicular particle orientations
+        perpendicular_orientations = {
+            Orientation.LEFT: (Orientation.UP, Orientation.DOWN),
+            Orientation.RIGHT: (Orientation.UP, Orientation.DOWN),
+            Orientation.UP: (Orientation.RIGHT, Orientation.LEFT),
+            Orientation.DOWN: (Orientation.RIGHT, Orientation.LEFT),
+        }
+
+        for orientation, (perp1, perp2) in perpendicular_orientations.items():
+            for shift in [-1, 1]:
+                # Choose the dimension perpendicular to particle orientation for obstacle shifting
+                # 0 for horizontal (LEFT, RIGHT) orientations (shift vertically),
+                # 1 for vertical (UP, DOWN) orientations (shift horizontally).
+                dim = 0 if orientation in [Orientation.LEFT, Orientation.RIGHT] else 1
+                log_tr_obstacles[orientation.value] += (
+                    (self.particles[perp1.value] + self.particles[perp2.value])
+                    * self.obstacles.roll(shifts=shift, dims=dim)
+                    * obstacle_interaction_strength
                 )
-                * self.obstacles.roll(shifts=shift, dims=1)
-                * align_strength
-            )
-            log_tr_obstacles[Orientation.DOWN.value] = (
-                (
-                    self.particles[Orientation.RIGHT.value]
-                    + self.particle[Orientation.LEFT.value]
-                )
-                * self.obstacles.roll(shifts=shift, dims=1)
-                * align_strength
-            )
+
+        return log_tr_obstacles
 
     def compute_tr(self, g: float = 1.0) -> None:
         """
@@ -615,7 +651,8 @@ class ParticleLattice:
         if self._is_empty(x, y):
             return 0.0
         # Get the coordinates of the target cell
-        new_x, new_y = self._get_target_position(x, y)
+        orientation = self.get_particle_orientation(x, y)
+        new_x, new_y = self._get_target_position(x, y, orientation)
 
         # Check if the target cell is empty
         if self._is_empty(new_x, new_y):
@@ -701,7 +738,11 @@ class ParticleLattice:
                     symbol = index_to_symbol[orientation_index]
                     row_str += symbol
                 row_str += " "  # Add space between cells
-            lattice_str += row_str + "\n"
+            lattice_str += row_str
+            if y < self.height - 1:
+                lattice_str += (
+                    "\n"  # Add a newline character after each row except the last
+                )
 
         return lattice_str
 
@@ -754,3 +795,6 @@ class ParticleLattice:
         new_lattice.next_particle_id = 0
 
         return new_lattice
+
+    def copy(self):
+        return copy.deepcopy(self)

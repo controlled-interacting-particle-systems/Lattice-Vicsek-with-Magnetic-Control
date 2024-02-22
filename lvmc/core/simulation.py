@@ -4,7 +4,7 @@ from typing import Optional, Tuple
 from lvmc.core.particle_lattice import ParticleLattice, Orientation
 from lvmc.core.magnetic_field import MagneticField
 from enum import Enum, auto
-from typing import NamedTuple,List 
+from typing import NamedTuple, List, Optional
 
 
 class EventType(Enum):
@@ -58,6 +58,42 @@ class Simulation:
         # Initialize time
         self.t = 0.0
 
+    def add_particle(self, x: int, y: int, orientation: Orientation = None) -> None:
+        """
+        Add a particle at the specified location.
+
+        :param x: The x-coordinate of the location.
+        :param y: The y-coordinate of the location.
+        :param orientation: The orientation of the particle.
+        """
+        self.lattice.add_particle(x, y, orientation)
+        self.update_rates()
+
+    def add_particle_flux(
+        self,
+        region: Tuple[int, int, int, int],
+        orientation: Orientation,
+        n_particles: int,
+    ) -> None:
+        """
+        Add a particle flux to the lattice.
+
+        :param region: A tuple (x1, y1, x2, y2) representing the region where the particles will be added.
+        :param orientation: The orientation of the particles.
+        :param n_particles: The number of particles to be added.
+        """
+        self.lattice.add_particle_flux(region, orientation, n_particles)
+        self.update_rates()
+
+    def populate_lattice(self, density: float) -> None:
+        """
+        Populate the lattice with particles.
+
+        :param density: The density of the particles.
+        """
+        n_added = self.lattice.populate(density)
+        self.update_rates()
+
     def initialize_rates(self) -> None:
         """
         Initialize the rates tensor.
@@ -66,10 +102,13 @@ class Simulation:
         self.rates[:n_orientations] = self.lattice.compute_tr(self.g)
         self.rates[n_orientations] = self.lattice.compute_tm(self.v0)
 
-    def update_rates(self, positions: list) -> None:
+    def update_rates(self, positions: list[Optional] = None) -> None:
         """
         Update the rates tensor based on the current state of the lattice.
         """
+        if positions is None:
+            self.initialize_rates()
+            return
         n_orientations = len(Orientation)
         # compute a list of the neighbours of positions
         affected_cells = positions
@@ -164,19 +203,21 @@ class Simulation:
 
         :return: An Optional tuple (event_type, x, y) representing the event, or None.
         """
-        delta_t = self.next_event_time()
-        self.t += delta_t
+        self.delta_t = self.next_event_time()
+        self.t += self.delta_t
         event = self.choose_event()
         affected_sites = self.perform_event(event)
         # self.update_rates(affected_sites)
-        self.initialize_rates()
+        self.update_rates()
         return event
 
-    def apply_magnetic_field(self) -> None:
+    def apply_magnetic_field(self, direction: int = 0) -> None:
         """
         Apply the magnetic field to the lattice.
         """
+        self.magnetic_field.set_direction(direction)
         self.magnetic_field.apply(self.lattice)
+        self.update_rates()
 
     def get_magnetic_field_state(self) -> int:
         """
