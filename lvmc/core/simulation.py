@@ -171,6 +171,7 @@ class Simulation:
         # convert the flat index back into 3D index using numpy.unravel_index because torch.unravel_index is not implemented yet
 
             # Temporary move to CPU for np.unravel_index, if necessary
+        cpu_device = torch.device('cpu')
         if device != torch.device('cpu'):
             chosen_index_cpu = chosen_index
             event_type_index, y, x = np.unravel_index(chosen_index_cpu, self.rates.shape)
@@ -178,11 +179,14 @@ class Simulation:
             event_type_index, y, x = (torch.tensor(event_type_index, device=device),
                                     torch.tensor(y, device=device),
                                     torch.tensor(x, device=device))
+            event_type_index = event_type_index.to(cpu_device).item()
+            y = y.to(cpu_device).item()
+            x = x.to(cpu_device).item()
         else:
             event_type_index, y, x = np.unravel_index(chosen_index, self.rates.shape)
             # No need to move back since we're on CPU
 
-        event_type = EventType(event_type_index)
+        event_type = EventType(event_type_index.item())
 
         return Event(event_type, x, y)
 
