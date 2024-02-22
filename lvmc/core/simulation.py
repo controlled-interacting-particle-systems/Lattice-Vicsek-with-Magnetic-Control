@@ -163,13 +163,24 @@ class Simulation:
         # Use cumulative sum and binary search to find the event
         cumulative_rates = torch.cumsum(rates_flat, dim=0)
         chosen_index = torch.searchsorted(
-            cumulative_rates, torch.tensor([random_value])
+            cumulative_rates, torch.tensor([random_value]),
+            
         ).item()
 
         # Convert the flat index back into 3D index
         # convert the flat index back into 3D index using numpy.unravel_index because torch.unravel_index is not implemented yet
 
-        event_type_index, y, x = np.unravel_index(chosen_index, self.rates.shape)
+            # Temporary move to CPU for np.unravel_index, if necessary
+        if device != torch.device('cpu'):
+            chosen_index_cpu = chosen_index
+            event_type_index, y, x = np.unravel_index(chosen_index_cpu, self.rates.shape)
+            # Convert results back to tensors and move to the original device
+            event_type_index, y, x = (torch.tensor(event_type_index, device=device),
+                                    torch.tensor(y, device=device),
+                                    torch.tensor(x, device=device))
+        else:
+            event_type_index, y, x = np.unravel_index(chosen_index, self.rates.shape)
+            # No need to move back since we're on CPU
 
         event_type = EventType(event_type_index)
 
