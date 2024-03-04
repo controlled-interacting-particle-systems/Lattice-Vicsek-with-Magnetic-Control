@@ -105,7 +105,8 @@ class Simulation:
         """
         n_orientations = len(Orientation)
         self.rates[:n_orientations] = self.lattice.compute_tr(self.g)
-        self.rates[n_orientations] = self.lattice.compute_tm(self.v0)
+        self.rates[EventType.MIGRATION.value] = self.lattice.compute_tm(self.v0)
+        self.rates[EventType.BIRTH.value] = self.lattice.compute_birth_rates(self.v0)
 
     def update_rates(self, positions: list[Optional] = None) -> None:
         """
