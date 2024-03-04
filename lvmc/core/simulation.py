@@ -13,6 +13,8 @@ class EventType(Enum):
     REORIENTATION_DOWN = Orientation.DOWN.value
     REORIENTATION_RIGHT = Orientation.RIGHT.value
     MIGRATION = auto()
+    BIRTH = auto()
+    # DEATH = auto()
     # Future event types can be added here, e.g., TRANSPORT_BY_FLOW = auto()
 
 
@@ -34,6 +36,9 @@ class Event(NamedTuple):
 
     def is_migration(self) -> bool:
         return self.etype == EventType.MIGRATION
+    
+    def is_birth(self) -> bool:
+        return self.etype == EventType.BIRTH
 
 
 class Simulation:
