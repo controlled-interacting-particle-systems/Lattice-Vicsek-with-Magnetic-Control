@@ -55,7 +55,7 @@ class Simulation:
         self.g = g
         self.v0 = v0
         self.rates = torch.zeros(
-            (len(Orientation) + 1, self.lattice.height, self.lattice.width),
+            (len(EventType), self.lattice.height, self.lattice.width),
             dtype=torch.float32,
             device=device,
         )
