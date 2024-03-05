@@ -48,6 +48,7 @@ class ParticleLattice:
         )
         self.obstacles = torch.zeros((height, width), dtype=torch.bool, device=device)
         self.sinks = torch.zeros((height, width), dtype=torch.bool, device=device)
+        self.sources = torch.zeros((height, width), dtype=torch.bool, device=device)
         # Initialize an array to store orientations of particles
         self.orientation_map = np.full(
             (height, width), None
