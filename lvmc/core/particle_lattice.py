@@ -636,12 +636,12 @@ class ParticleLattice:
 
         return log_tr_obstacles
 
-    def compute_tr(self, g: float = 1.0) -> None:
+    def compute_tr(self, g: float = 1.0) -> torch.Tensor:
         """
         Compute the reorientation transition rate tensor TR.
 
         :param g: Parameter controlling alignment sensitivity. Default is 1.0.
-        :type g: float
+        :return: The reorientation transition rate tensor.
         """
         # Calculate occupied cells (where at least one particle is present)
         occupied_cells = self.particles.sum(dim=0).bool()
