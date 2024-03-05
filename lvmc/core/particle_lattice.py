@@ -818,4 +818,37 @@ class ParticleLattice:
         return new_lattice
 
     def copy(self):
-        return copy.deepcopy(self)
+    
+    def visualize_lattice(self):
+        lattice_str = ""
+        index_to_symbol = self._create_index_to_symbol_mapping()
+        orientation_to_color = {
+            0: "red",
+            1: "green",
+            2: "blue",
+            3: "yellow",
+            # Add more mappings as needed
+        }
+
+        for y in range(self.height):
+            row_str = ""
+            for x in range(self.width):
+                if self.obstacles[y, x]:
+                    cell_str = "[bold white]■[/]"  # Obstacle
+                elif self.sinks[y, x]:
+                    if not self._is_empty(x, y):
+                        cell_str = "[bold cyan]✱[/]"  # Particle in sink
+                    else:
+                        cell_str = "[bold magenta]▼[/]"  # Sink
+                elif self._is_empty(x, y):
+                    cell_str = "[dim]·[/]"  # Empty cell
+                else:
+                    orientation_index = self.get_particle_orientation(x, y).value
+                    color = orientation_to_color.get(orientation_index, "white")
+                    symbol = index_to_symbol[orientation_index]
+                    cell_str = f"[bold {color}]{symbol}[/]"
+                row_str += cell_str + " "
+            lattice_str += row_str.strip() + "\n"
+
+        return lattice_str.strip()
+
