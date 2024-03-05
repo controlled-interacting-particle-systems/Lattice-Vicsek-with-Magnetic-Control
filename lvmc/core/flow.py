@@ -30,31 +30,31 @@ class Flow:
         :return: a tensor of shape (height, width, len(Orientation)) with the migration rate terms
         """
         tm = torch.zeros(
-            (self.height, self.width, len(Orientation)), dtype=torch.float32
+            (len(Orientation), self.height, self.width), dtype=torch.float32
         )
 
-        tm[:, :, Orientation.RIGHT] = (
+        tm[Orientation.RIGHT.value] = (
             self.velocity_field[0, :, :]
             * mask
-            * mask.roll(shifts=-1, dims=1)
+            * ~mask.roll(shifts=-1, dims=1)
             * (self.velocity_field[0, :, :] > 0)
         )
-        tm[:, :, Orientation.LEFT] = (
+        tm[Orientation.LEFT.value] = (
             -self.velocity_field[0, :, :]
             * mask
-            * mask.roll(shifts=1, dims=1)
+            * ~mask.roll(shifts=1, dims=1)
             * (self.velocity_field[0, :, :] < 0)
         )
-        tm[:, :, Orientation.UP] = (
+        tm[Orientation.UP.value] = (
             self.velocity_field[1, :, :]
             * mask
-            * mask.roll(shifts=-1, dims=0)
+            * ~mask.roll(shifts=-1, dims=0)
             * (self.velocity_field[1, :, :] > 0)
         )
-        tm[:, :, Orientation.DOWN] = (
+        tm[Orientation.DOWN.value] = (
             -self.velocity_field[1, :, :]
             * mask
-            * mask.roll(shifts=1, dims=0)
+            * ~mask.roll(shifts=1, dims=0)
             * (self.velocity_field[1, :, :] < 0)
         )
         return tm
@@ -65,15 +65,15 @@ class Flow:
         :return: a tensor of shape (height, width, len(Orientation)) with the reorientation rate terms
         """
         tr = torch.zeros(
-            (self.height, self.width, len(Orientation)), dtype=torch.float32
+            (len(Orientation), self.height, self.width), dtype=torch.float32
         )
-        positive_vorts = self.vorticity_field > 0
+
         tr = (
             0.5
             * self.vorticity_field
             * (
-                positive_vorts * lattice.particles.roll(shifts=-1, dims=1)
-                - (~positive_vorts) * lattice.particles.roll(shifts=1, dims=1)
+                self.positive_vorts * lattice.particles.roll(shifts=1, dims=0)
+                ^ (~self.positive_vorts) * lattice.particles.roll(shifts=-1, dims=0)
             )
         )
         return tr
@@ -94,7 +94,8 @@ class Flow:
         """Set the vorticity field
         :param vorticity_field: a tensor of shape (height, width) with the vorticity field
         """
-        self.vorticity_field = vorticity_field
+        self.vorticity_field = torch.abs(vorticity_field)
+        self.positive_vorts = vorticity_field > 0
 
 
 class PoiseuilleFlow(Flow):
@@ -103,17 +104,17 @@ class PoiseuilleFlow(Flow):
     def __init__(self, width, height, v1):
         super().__init__(width, height)
         self.v1 = v1
-        self.compute_velocity_field()
-        self.compute_vorticity_field()
-        self.yy = torch.linspace(
+        self.yy = -torch.linspace(
             -1 - 1 / (self.height - 2), 1 + 1 / (self.height - 2), self.height
         )
+        self.compute_velocity_field()
+        self.compute_vorticity_field()
 
     def compute_velocity_field(self):
         """Compute the velocity field"""
 
         self.velocity_field[0, :, :] = (
-            (self.v1 * (1 - self.yy**2)).unsqueeze(0).expand(self.width, self.height)
+            (self.v1 * (1 - self.yy**2)).repeat(self.width, 1).T
         )
         self.velocity_field[1, :, :] = 0
 
@@ -122,3 +123,5 @@ class PoiseuilleFlow(Flow):
         self.vorticity_field = (
             2 * self.v1 * self.yy.unsqueeze(1).expand(self.height, self.width)
         )
+        self.positive_vorts = self.vorticity_field > 0
+        self.vorticity_field = torch.abs(self.vorticity_field)
