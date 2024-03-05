@@ -650,6 +650,16 @@ class ParticleLattice:
         tr = torch.exp(g * log_tr) * occupied_cells
 
         return tr * (torch.ones_like(self.particles) ^ self.particles)
+    
+    def compute_birth_rates(self, v0: float = 1.0) -> torch.Tensor:
+        """
+        Compute the birth transition rate tensor.
+        
+        :param v0: Base transition rate for particle movement.
+        :return: The birth transition rate tensor.
+        """
+        return (~self.occupancy_map) * self.sources * v0 * self.density
+
 
     def compute_local_tm(self, x: int, y: int, v0: float = 1.0) -> float:
         """
