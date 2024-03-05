@@ -29,7 +29,7 @@ class ParticleLattice:
 
     NUM_ORIENTATIONS = len(Orientation)  # Class level constant
 
-    def __init__(self, width: int, height: int, density: float = 0.0, mode="default"):
+    def __init__(self, width: int, height: int, mode="default"):
         """
         Initialize the particle lattice.
         :param width: Width of the lattice.
@@ -61,8 +61,7 @@ class ParticleLattice:
         self.position_to_particle_id = {}  # Dictionary to map positions to particle IDs
         self.next_particle_id = 0  # Counter to assign unique IDs to particles
 
-        # Initialize the lattice with particles at a given density.
-        self.populate(density)
+
 
         # Precompute deltas for each orientation
         self.orientation_deltas = {

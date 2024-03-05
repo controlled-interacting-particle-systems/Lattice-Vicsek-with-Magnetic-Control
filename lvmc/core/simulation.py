@@ -56,7 +56,7 @@ class Event(NamedTuple):
 
 class Simulation:
     def __init__(
-        self, g: float, v0: float, lattice_params: dict, flow_params: Optional[dict]
+        self, g: float, v0: float, width: int, height: int, density: float, flow_params: Optional[dict] = None
     ) -> None:
         """
         Initialize the simulation with a given lattice, magnetic field, and parameters.
@@ -65,19 +65,20 @@ class Simulation:
         :param v0: Base transition rate for particle movement.
         :param lattice_params: Parameters for the lattice.
         """
-        self.lattice = ParticleLattice(**lattice_params)
+        self.density = density
+        self.lattice = ParticleLattice(width=width, height=height)
         self.magnetic_field = MagneticField()
-        if flow_params["flow_type"] == "none":
+        if flow_params is None:
             print("Simulation without flow")
             self.with_flow = False
-        elif flow_params["flow_type"] == "poiseuille":
+        elif flow_params["type"] == "poiseuille":
             print("Simulation with Poiseuille flow")
             self.flow = PoiseuilleFlow(
                 self.lattice.width, self.lattice.height, flow_params["v1"]
             )
             self.with_flow = True
         else:
-            raise ValueError(f"Unrecognized flow type: {flow_params['flow_type']}")
+            raise ValueError(f"Unrecognized flow type: {flow_params['type']}")
         self.g = g
         self.v0 = v0
         self.rates = torch.zeros(
@@ -265,6 +266,10 @@ class Simulation:
 
         :return: An Optional tuple (event_type, x, y) representing the event, or None.
         """
+        # populate the lattice on the first iteration
+        if self.t == 0:
+            self.populate_lattice(self.density)
+        
         self.delta_t = self.next_event_time()
         self.t += self.delta_t
         event = self.choose_event()
