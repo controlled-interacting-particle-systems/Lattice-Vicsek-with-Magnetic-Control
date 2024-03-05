@@ -13,6 +13,8 @@ class EventType(Enum):
     REORIENTATION_DOWN = Orientation.DOWN.value
     REORIENTATION_RIGHT = Orientation.RIGHT.value
     MIGRATION = auto()
+    BIRTH = auto()
+    # DEATH = auto()
     # Future event types can be added here, e.g., TRANSPORT_BY_FLOW = auto()
 
 
@@ -34,6 +36,9 @@ class Event(NamedTuple):
 
     def is_migration(self) -> bool:
         return self.etype == EventType.MIGRATION
+    
+    def is_birth(self) -> bool:
+        return self.etype == EventType.BIRTH
 
 
 class Simulation:
@@ -50,7 +55,7 @@ class Simulation:
         self.g = g
         self.v0 = v0
         self.rates = torch.zeros(
-            (len(Orientation) + 1, self.lattice.height, self.lattice.width),
+            (len(EventType), self.lattice.height, self.lattice.width),
             dtype=torch.float32,
             device=device,
         )
@@ -100,7 +105,8 @@ class Simulation:
         """
         n_orientations = len(Orientation)
         self.rates[:n_orientations] = self.lattice.compute_tr(self.g)
-        self.rates[n_orientations] = self.lattice.compute_tm(self.v0)
+        self.rates[EventType.MIGRATION.value] = self.lattice.compute_tm(self.v0)
+        self.rates[EventType.BIRTH.value] = self.lattice.compute_birth_rates(self.v0)
 
     def update_rates(self, positions: list[Optional] = None) -> None:
         """
@@ -158,18 +164,33 @@ class Simulation:
             )
 
         # Generate a uniform random number between 0 and total_rate
-        random_value = torch.rand(1).item() * total_rate
+        random_value = torch.rand(1, device=device) * total_rate
 
         # Use cumulative sum and binary search to find the event
         cumulative_rates = torch.cumsum(rates_flat, dim=0)
         chosen_index = torch.searchsorted(
-            cumulative_rates, torch.tensor([random_value])
+            cumulative_rates, random_value.to(device),
+            
         ).item()
 
         # Convert the flat index back into 3D index
         # convert the flat index back into 3D index using numpy.unravel_index because torch.unravel_index is not implemented yet
 
-        event_type_index, y, x = np.unravel_index(chosen_index, self.rates.shape)
+            # Temporary move to CPU for np.unravel_index, if necessary
+        cpu_device = torch.device('cpu')
+        if device != torch.device('cpu'):
+            chosen_index_cpu = chosen_index
+            event_type_index, y, x = np.unravel_index(chosen_index_cpu, self.rates.shape)
+            # Convert results back to tensors and move to the original device
+            event_type_index, y, x = (torch.tensor(event_type_index, device=device),
+                                    torch.tensor(y, device=device),
+                                    torch.tensor(x, device=device))
+            event_type_index = event_type_index.to(cpu_device).item()
+            y = y.to(cpu_device).item()
+            x = x.to(cpu_device).item()
+        else:
+            event_type_index, y, x = np.unravel_index(chosen_index, self.rates.shape)
+            # No need to move back since we're on CPU
 
         event_type = EventType(event_type_index)
 
@@ -194,6 +215,9 @@ class Simulation:
         elif event.is_migration():
             new_pos = self.lattice.move_particle(event.x, event.y)
             return [(event.x, event.y)] + new_pos
+        elif event.is_birth():
+            new_pos = self.lattice.add_particle(event.x, event.y)
+            return new_pos
         else:
             raise ValueError(f"Unrecognized event type: {event.etype}")
 

@@ -48,6 +48,7 @@ class ParticleLattice:
         )
         self.obstacles = torch.zeros((height, width), dtype=torch.bool, device=device)
         self.sinks = torch.zeros((height, width), dtype=torch.bool, device=device)
+        self.sources = torch.zeros((height, width), dtype=torch.bool, device=device)
         # Initialize an array to store orientations of particles
         self.orientation_map = np.full(
             (height, width), None
@@ -513,6 +514,16 @@ class ParticleLattice:
             raise ValueError("Sinks tensor must match the lattice dimensions.")
         self.sinks = sinks
 
+    def set_sources(self, sources: torch.Tensor) -> None:
+        """
+        Set the sources for the lattice.
+        :param sources: A binary matrix indicating the source cells.
+        """
+        if sources.shape != (self.height, self.width):
+            raise ValueError("Sources tensor must match the lattice dimensions.")
+        self.sources = sources
+        # zero out the sources for obstacle cells
+        self.sources = self.sources * ~self.obstacles
     ##################################
     ## Transition Rates Computation ##
     ##################################
@@ -625,12 +636,12 @@ class ParticleLattice:
 
         return log_tr_obstacles
 
-    def compute_tr(self, g: float = 1.0) -> None:
+    def compute_tr(self, g: float = 1.0) -> torch.Tensor:
         """
         Compute the reorientation transition rate tensor TR.
 
         :param g: Parameter controlling alignment sensitivity. Default is 1.0.
-        :type g: float
+        :return: The reorientation transition rate tensor.
         """
         # Calculate occupied cells (where at least one particle is present)
         occupied_cells = self.particles.sum(dim=0).bool()
@@ -639,6 +650,16 @@ class ParticleLattice:
         tr = torch.exp(g * log_tr) * occupied_cells
 
         return tr * (torch.ones_like(self.particles) ^ self.particles)
+    
+    def compute_birth_rates(self, v0: float = 1.0) -> torch.Tensor:
+        """
+        Compute the birth transition rate tensor.
+        
+        :param v0: Base transition rate for particle movement.
+        :return: The birth transition rate tensor.
+        """
+        return (~self.occupancy_map) * self.sources * v0 * self.density
+
 
     def compute_local_tm(self, x: int, y: int, v0: float = 1.0) -> float:
         """
@@ -798,3 +819,37 @@ class ParticleLattice:
 
     def copy(self):
         return copy.deepcopy(self)
+    
+    def visualize_lattice(self):
+        lattice_str = ""
+        index_to_symbol = self._create_index_to_symbol_mapping()
+        orientation_to_color = {
+            0: "red",
+            1: "green",
+            2: "blue",
+            3: "yellow",
+            # Add more mappings as needed
+        }
+
+        for y in range(self.height):
+            row_str = ""
+            for x in range(self.width):
+                if self.obstacles[y, x]:
+                    cell_str = "[bold white]■[/]"  # Obstacle
+                elif self.sinks[y, x]:
+                    if not self._is_empty(x, y):
+                        cell_str = "[bold cyan]✱[/]"  # Particle in sink
+                    else:
+                        cell_str = "[bold magenta]▼[/]"  # Sink
+                elif self._is_empty(x, y):
+                    cell_str = "[dim]·[/]"  # Empty cell
+                else:
+                    orientation_index = self.get_particle_orientation(x, y).value
+                    color = orientation_to_color.get(orientation_index, "white")
+                    symbol = index_to_symbol[orientation_index]
+                    cell_str = f"[bold {color}]{symbol}[/]"
+                row_str += cell_str + " "
+            lattice_str += row_str.strip() + "\n"
+
+        return lattice_str.strip()
+
