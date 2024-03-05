@@ -514,6 +514,16 @@ class ParticleLattice:
             raise ValueError("Sinks tensor must match the lattice dimensions.")
         self.sinks = sinks
 
+    def set_sources(self, sources: torch.Tensor) -> None:
+        """
+        Set the sources for the lattice.
+        :param sources: A binary matrix indicating the source cells.
+        """
+        if sources.shape != (self.height, self.width):
+            raise ValueError("Sources tensor must match the lattice dimensions.")
+        self.sources = sources
+        # zero out the sources for obstacle cells
+        self.sources = self.sources * ~self.obstacles
     ##################################
     ## Transition Rates Computation ##
     ##################################
