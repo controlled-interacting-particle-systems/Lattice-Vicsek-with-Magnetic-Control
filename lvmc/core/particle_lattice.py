@@ -7,7 +7,6 @@ from typing import List, Tuple, Optional, Union
 import copy
 
 
-
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(f"Using device: {device}")
 
@@ -387,6 +386,12 @@ class ParticleLattice:
         # Get the expected position of the particle
         new_x, new_y = self._get_target_position(x, y, orientation)
 
+        if self._is_obstacle(new_x, new_y):
+            new_x, new_y = x, y
+            new_orientation = Orientation((orientation.value + 2) % 4)
+            self.reorient_particle(x, y, new_orientation)
+            return [new_x, new_y]
+
         particle_id = self.position_to_particle_id.pop((x, y))
         self._update_tracking(particle_id, new_x, new_y)
 
@@ -422,6 +427,8 @@ class ParticleLattice:
 
         # Get the expected position of the particle, and the old orientation
         new_x, new_y = self._get_target_position(x, y, direction)
+        if self._is_obstacle(new_x, new_y):
+            return []
         orientation = self.get_particle_orientation(x, y)
 
         # get the id of the particle at (x, y)
@@ -524,6 +531,7 @@ class ParticleLattice:
         self.sources = sources
         # zero out the sources for obstacle cells
         self.sources = self.sources * ~self.obstacles
+
     ##################################
     ## Transition Rates Computation ##
     ##################################
@@ -533,7 +541,7 @@ class ParticleLattice:
         Compute the migration transition rate tensor TM with periodic boundary conditions.
         """
         # Calculate empty cells (where no particle nor obstacle is present)
-        empty_cells = ~(self.particles.sum(dim=0) + self.obstacles).bool()
+        empty_cells = ~self.particles.sum(dim=0).bool()
 
         # Calculate potential moves in each direction
         TM_up = self.particles[Orientation.UP.value] * empty_cells.roll(
@@ -602,40 +610,6 @@ class ParticleLattice:
 
         return log_TR_tensor
 
-    def compute_log_tr_obstacles(self) -> torch.Tensor:
-        """
-        Compute the reorientation transition log rate tensor near obstacles.
-        """
-        log_tr_obstacles = torch.zeros(
-            (ParticleLattice.NUM_ORIENTATIONS, self.height, self.width),
-            dtype=torch.float32,
-            device=device,
-        )
-
-        obstacle_interaction_strength = 0.5
-
-        # Mapping of orientations to their perpendicular particle orientations
-        perpendicular_orientations = {
-            Orientation.LEFT: (Orientation.UP, Orientation.DOWN),
-            Orientation.RIGHT: (Orientation.UP, Orientation.DOWN),
-            Orientation.UP: (Orientation.RIGHT, Orientation.LEFT),
-            Orientation.DOWN: (Orientation.RIGHT, Orientation.LEFT),
-        }
-
-        for orientation, (perp1, perp2) in perpendicular_orientations.items():
-            for shift in [-1, 1]:
-                # Choose the dimension perpendicular to particle orientation for obstacle shifting
-                # 0 for horizontal (LEFT, RIGHT) orientations (shift vertically),
-                # 1 for vertical (UP, DOWN) orientations (shift horizontally).
-                dim = 0 if orientation in [Orientation.LEFT, Orientation.RIGHT] else 1
-                log_tr_obstacles[orientation.value] += (
-                    (self.particles[perp1.value] + self.particles[perp2.value])
-                    * self.obstacles.roll(shifts=shift, dims=dim)
-                    * obstacle_interaction_strength
-                )
-
-        return log_tr_obstacles
-
     def compute_tr(self, g: float = 1.0) -> torch.Tensor:
         """
         Compute the reorientation transition rate tensor TR.
@@ -646,20 +620,19 @@ class ParticleLattice:
         # Calculate occupied cells (where at least one particle is present)
         occupied_cells = self.particles.sum(dim=0).bool()
 
-        log_tr = self.compute_log_tr() + self.compute_log_tr_obstacles()
+        log_tr = self.compute_log_tr()
         tr = torch.exp(g * log_tr) * occupied_cells
 
         return tr * (torch.ones_like(self.particles) ^ self.particles)
-    
+
     def compute_birth_rates(self, v0: float = 1.0) -> torch.Tensor:
         """
         Compute the birth transition rate tensor.
-        
+
         :param v0: Base transition rate for particle movement.
         :return: The birth transition rate tensor.
         """
         return (~self.occupancy_map) * self.sources * v0 * self.density
-
 
     def compute_local_tm(self, x: int, y: int, v0: float = 1.0) -> float:
         """
@@ -819,7 +792,7 @@ class ParticleLattice:
 
     def copy(self):
         return copy.deepcopy(self)
-    
+
     def visualize_lattice(self):
         lattice_str = ""
         index_to_symbol = self._create_index_to_symbol_mapping()
@@ -852,4 +825,3 @@ class ParticleLattice:
             lattice_str += row_str.strip() + "\n"
 
         return lattice_str.strip()
-
