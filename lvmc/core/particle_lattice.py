@@ -818,6 +818,7 @@ class ParticleLattice:
         return new_lattice
 
     def copy(self):
+        return copy.deepcopy(self)
     
     def visualize_lattice(self):
         lattice_str = ""
