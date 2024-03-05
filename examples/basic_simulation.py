@@ -6,7 +6,7 @@ from parameters import *
 
 def main():
     # Initialize the Simulation
-    simulation = Simulation(g, v0, **lattice_params)
+    simulation = Simulation(g, v0, lattice_params, flow_params)
 
     n_steps = int(1e4)  # Number of steps to run the simulation for
 
