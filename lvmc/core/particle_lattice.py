@@ -61,8 +61,6 @@ class ParticleLattice:
         self.position_to_particle_id = {}  # Dictionary to map positions to particle IDs
         self.next_particle_id = 0  # Counter to assign unique IDs to particles
 
-
-
         # Precompute deltas for each orientation
         self.orientation_deltas = {
             Orientation.UP: (0, -1),

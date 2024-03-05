@@ -56,7 +56,13 @@ class Event(NamedTuple):
 
 class Simulation:
     def __init__(
-        self, g: float, v0: float, width: int, height: int, density: float, flow_params: Optional[dict] = None
+        self,
+        g: float,
+        v0: float,
+        width: int,
+        height: int,
+        density: float,
+        flow_params: Optional[dict] = None,
     ) -> None:
         """
         Initialize the simulation with a given lattice, magnetic field, and parameters.
@@ -269,7 +275,7 @@ class Simulation:
         # populate the lattice on the first iteration
         if self.t == 0:
             self.populate_lattice(self.density)
-        
+
         self.delta_t = self.next_event_time()
         self.t += self.delta_t
         event = self.choose_event()

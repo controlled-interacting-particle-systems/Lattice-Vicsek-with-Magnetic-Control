@@ -8,7 +8,7 @@ import pstats
 
 def main():
     # Initialize the Simulation
-    simulation = Simulation(g, v0, **lattice_params)
+    simulation = Simulation(g, v0, width=width, height=height, density=density, flow_params=flow_params)
     n_steps = int(1e4)  # Number of steps to run the simulation for
 
     # Start profiling here
