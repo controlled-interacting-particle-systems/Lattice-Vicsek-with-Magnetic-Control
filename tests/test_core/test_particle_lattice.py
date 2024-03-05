@@ -582,30 +582,35 @@ def test_transport_particle():
     assert lattice.get_particle_orientation(x_new, y_new) == original_orientation
 
 
-def test_compute_log_tr_obstacles():
+def test_reflective_boundary_conditions():
     lattice = ParticleLattice(width=10, height=10)
-    x, y = 5, 5
-    orientation = np.random.choice(list(Orientation))
-    lattice.add_particle(x, y, orientation)
+    lattice.add_particle(5, 5, Orientation.UP)
+    lattice.set_obstacle(5, 4)
+    lattice.move_particle(5, 5)
 
-    # Get the target position
-    x_new, y_new = lattice._get_target_position(x, y, orientation)
+    lattice.add_particle(1, 2, Orientation.LEFT)
+    lattice.set_obstacle(0, 2)
+    lattice.move_particle(1, 2)
 
-    # Add an obstacle at the target position
-    lattice.set_obstacle(x_new, y_new)
+    lattice.add_particle(8, 8, Orientation.RIGHT)
+    lattice.set_obstacle(9, 8)
+    lattice.move_particle(8, 8)
 
-    # Compute the log transition rate term corresponding to the obstacle
-    log_tr = lattice.compute_log_tr_obstacles()
+    lattice.add_particle(5, 0, Orientation.DOWN)
+    lattice.set_obstacle(5, 1)
+    lattice.move_particle(5, 0)
 
-    up_down_log_rates = 0.5 * torch.tensor([0.0, 1.0, 0.0, 1.0])
-    left_right_log_rates = 0.5 * torch.tensor([1.0, 0.0, 1.0, 0.0])
-    if orientation == Orientation.UP or orientation == Orientation.DOWN:
-        assert torch.allclose(log_tr[:, y, x], up_down_log_rates)
-    else:
-        assert torch.allclose(log_tr[:, y, x], left_right_log_rates)
+    assert not lattice._is_empty(1, 2)
+    assert not lattice._is_empty(8, 8)
+    assert not lattice._is_empty(5, 0)
+    assert not lattice._is_empty(5, 5)
 
-    # Check that all other x,y entries are zero
-    for x in range(lattice.width):
-        for y in range(lattice.height):
-            if x != x_new and y != y_new:
-                assert log_tr[:, y, x].sum() == 0.0
+    assert lattice.get_particle_orientation(5, 5) == Orientation.DOWN
+    assert lattice.get_particle_orientation(1, 2) == Orientation.RIGHT
+    assert lattice.get_particle_orientation(8, 8) == Orientation.LEFT
+    assert lattice.get_particle_orientation(5, 0) == Orientation.UP
+
+    assert lattice._is_obstacle(5, 4)
+    assert lattice._is_obstacle(0, 2)
+    assert lattice._is_obstacle(9, 8)
+    assert lattice._is_obstacle(5, 1)
