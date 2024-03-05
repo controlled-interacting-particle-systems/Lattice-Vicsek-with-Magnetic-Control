@@ -215,6 +215,9 @@ class Simulation:
         elif event.is_migration():
             new_pos = self.lattice.move_particle(event.x, event.y)
             return [(event.x, event.y)] + new_pos
+        elif event.is_birth():
+            new_pos = self.lattice.add_particle(event.x, event.y)
+            return new_pos
         else:
             raise ValueError(f"Unrecognized event type: {event.etype}")
 
