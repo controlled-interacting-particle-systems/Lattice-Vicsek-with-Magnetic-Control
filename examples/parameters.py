@@ -9,3 +9,10 @@ lattice_params = {
 # Simulation parameters
 g = 2.0  # Alignment sensitivity
 v0 = 100.0  # Base transition rate
+
+# Flow parameters
+flow_params = {
+    # include relevant parameters here
+    "flow_type": "poiseuille",
+    "v1": 100,
+}
