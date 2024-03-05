@@ -3,6 +3,7 @@ import numpy as np
 from typing import Optional, Tuple
 from lvmc.core.particle_lattice import ParticleLattice, Orientation
 from lvmc.core.magnetic_field import MagneticField
+from lvmc.core.flow import PoiseuilleFlow
 from enum import Enum, auto
 from typing import NamedTuple, List, Optional
 
@@ -14,6 +15,10 @@ class EventType(Enum):
     REORIENTATION_RIGHT = Orientation.RIGHT.value
     MIGRATION = auto()
     BIRTH = auto()
+    TRANSPORT_UP = auto()
+    TRANSPORT_LEFT = auto()
+    TRANSPORT_DOWN = auto()
+    TRANSPORT_RIGHT = auto()
     # DEATH = auto()
     # Future event types can be added here, e.g., TRANSPORT_BY_FLOW = auto()
 
@@ -36,13 +41,23 @@ class Event(NamedTuple):
 
     def is_migration(self) -> bool:
         return self.etype == EventType.MIGRATION
-    
+
     def is_birth(self) -> bool:
         return self.etype == EventType.BIRTH
 
+    def is_transport(self) -> bool:
+        return self.etype in {
+            EventType.TRANSPORT_UP,
+            EventType.TRANSPORT_LEFT,
+            EventType.TRANSPORT_DOWN,
+            EventType.TRANSPORT_RIGHT,
+        }
+
 
 class Simulation:
-    def __init__(self, g: float, v0: float, **lattice_params: dict) -> None:
+    def __init__(
+        self, g: float, v0: float, lattice_params: dict, flow_params: Optional[dict]
+    ) -> None:
         """
         Initialize the simulation with a given lattice, magnetic field, and parameters.
 
@@ -52,6 +67,17 @@ class Simulation:
         """
         self.lattice = ParticleLattice(**lattice_params)
         self.magnetic_field = MagneticField()
+        if flow_params["flow_type"] == "none":
+            print("Simulation without flow")
+            self.with_flow = False
+        elif flow_params["flow_type"] == "poiseuille":
+            print("Simulation with Poiseuille flow")
+            self.flow = PoiseuilleFlow(
+                self.lattice.width, self.lattice.height, flow_params["v1"]
+            )
+            self.with_flow = True
+        else:
+            raise ValueError(f"Unrecognized flow type: {flow_params['flow_type']}")
         self.g = g
         self.v0 = v0
         self.rates = torch.zeros(
@@ -107,6 +133,11 @@ class Simulation:
         self.rates[:n_orientations] = self.lattice.compute_tr(self.g)
         self.rates[EventType.MIGRATION.value] = self.lattice.compute_tm(self.v0)
         self.rates[EventType.BIRTH.value] = self.lattice.compute_birth_rates(self.v0)
+        if self.with_flow:
+            self.rates[
+                EventType.TRANSPORT_UP.value : EventType.TRANSPORT_RIGHT.value + 1
+            ] = self.flow.compute_tm(self.lattice.occupancy_map)
+            self.rates[:n_orientations] += self.flow.compute_tr(self.lattice)
 
     def update_rates(self, positions: list[Optional] = None) -> None:
         """
@@ -169,22 +200,26 @@ class Simulation:
         # Use cumulative sum and binary search to find the event
         cumulative_rates = torch.cumsum(rates_flat, dim=0)
         chosen_index = torch.searchsorted(
-            cumulative_rates, random_value.to(device),
-            
+            cumulative_rates,
+            random_value.to(device),
         ).item()
 
         # Convert the flat index back into 3D index
         # convert the flat index back into 3D index using numpy.unravel_index because torch.unravel_index is not implemented yet
 
-            # Temporary move to CPU for np.unravel_index, if necessary
-        cpu_device = torch.device('cpu')
-        if device != torch.device('cpu'):
+        # Temporary move to CPU for np.unravel_index, if necessary
+        cpu_device = torch.device("cpu")
+        if device != torch.device("cpu"):
             chosen_index_cpu = chosen_index
-            event_type_index, y, x = np.unravel_index(chosen_index_cpu, self.rates.shape)
+            event_type_index, y, x = np.unravel_index(
+                chosen_index_cpu, self.rates.shape
+            )
             # Convert results back to tensors and move to the original device
-            event_type_index, y, x = (torch.tensor(event_type_index, device=device),
-                                    torch.tensor(y, device=device),
-                                    torch.tensor(x, device=device))
+            event_type_index, y, x = (
+                torch.tensor(event_type_index, device=device),
+                torch.tensor(y, device=device),
+                torch.tensor(x, device=device),
+            )
             event_type_index = event_type_index.to(cpu_device).item()
             y = y.to(cpu_device).item()
             x = x.to(cpu_device).item()
@@ -218,6 +253,9 @@ class Simulation:
         elif event.is_birth():
             new_pos = self.lattice.add_particle(event.x, event.y)
             return new_pos
+        elif event.is_transport():
+            direction = Orientation(event.etype.value - EventType.TRANSPORT_UP.value)
+            new_pos = self.lattice.transport_particle(event.x, event.y, direction)
         else:
             raise ValueError(f"Unrecognized event type: {event.etype}")
 
