@@ -305,7 +305,7 @@ class ParticleLattice:
         :param density: Density of particles to be initialized.
         :return: The number of particles added to the lattice.
         """
-        num_cells = self.width * self.height
+        num_cells = self.width * self.height - self.obstacles.sum().item()
         num_particles = int(density * num_cells)
 
         # Randomly place particles
