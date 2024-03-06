@@ -146,7 +146,7 @@ class Simulation:
             ] = self.flow.compute_tm(self.lattice.occupancy_map)
             self.rates[:n_orientations] += self.flow.compute_tr(self.lattice)
 
-    def update_rates(self, positions: list[Optional] = None) -> None:
+    def update_rates(self, positions: list[Optional[int]] = None) -> None:
         """
         Update the rates tensor based on the current state of the lattice.
         """
