@@ -13,8 +13,7 @@ class DataCollector:
         self.simulation = simulation
         self.data = {
             "metadata": {
-                "g": simulation.g,
-                "v0": simulation.v0,
+                "simulation_params": simulation.get_params(),
                 "lattice_params": simulation.lattice.get_params(),  # Assuming a method to fetch lattice parameters
             },
             "initial_config": simulation.lattice.query_lattice_state(),

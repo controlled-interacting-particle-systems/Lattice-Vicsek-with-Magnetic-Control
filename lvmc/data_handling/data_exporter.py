@@ -40,6 +40,17 @@ class DataExporter:
                     "initial_config", data=self.data_collector.data["initial_config"]
                 )
 
+            # Export obstacles
+            if isinstance(self.data_collector.data["obstacles"], torch.Tensor):
+                file.create_dataset(
+                    "obstacles",
+                    data=self.data_collector.data["obstacles"].numpy(),
+                )
+            else:
+                file.create_dataset(
+                    "obstacles", data=self.data_collector.data["obstacles"]
+                )
+
             # Export snapshots
             snapshots_group = file.create_group("snapshots")
             for i, (time, snapshot) in enumerate(self.data_collector.data["snapshots"]):

@@ -6,6 +6,9 @@ from lvmc.core.magnetic_field import MagneticField
 from lvmc.core.flow import PoiseuilleFlow
 from enum import Enum, auto
 from typing import NamedTuple, List, Optional
+import json
+import h5py
+
 
 
 class EventType(Enum):
@@ -56,8 +59,8 @@ class Event(NamedTuple):
 
 class Simulation:
     def __init__(
-        self, g: float, v0: float, width: int, height: int, density: float, flow_params: Optional[dict] = None
-    ) -> None:
+        self, g: float, v0: float, width: int, height: int, density: float, flow_params: Optional[dict] = None,
+        init_time: Optional[float] = 0.0, init_part: torch.float32 = None, obstacles: torch.float32 = None) -> None:
         """
         Initialize the simulation with a given lattice, magnetic field, and parameters.
 
@@ -67,7 +70,22 @@ class Simulation:
         """
         self.density = density
         self.lattice = ParticleLattice(width=width, height=height)
+        if not init_part is None:
+            self.lattice.particles = init_part
+            if obstacles is None:
+                print("Warning: starting with prescribed particles but no obstacle")
+            else:
+                self.lattice.set_obstacles(obstacles)
+            for x in range(width):
+                for y in range(height):
+                    for ior in list(Orientation):
+                        if self.lattice.particles[ior.value, y, x]:
+                            self.lattice.orientation_map[y, x] = ior
+                            self.lattice.occupancy_map[y, x] = True
+        elif not obstacles is None:
+            print("Warning: starting with prescribed obstacles but no particles")
         self.magnetic_field = MagneticField()
+        self.flow_params = flow_params
         if flow_params is None:
             print("Simulation without flow")
             self.with_flow = False
@@ -88,8 +106,39 @@ class Simulation:
         )
         self.initialize_rates()
         # Initialize time
-        self.t = 0.0
+        self.t = init_time
 
+    @classmethod
+    def init_from_file(cls, fname:str) -> None:
+        """
+        Initialize the simulation from hdf5 file.
+
+        :param fname: file name
+        """
+        print("Initializing simulation from file", fname)
+        with h5py.File(fname, "r") as file:
+            sim_params = json.loads(file.attrs["simulation_params"])
+            lattice_params = json.loads(file.attrs["lattice_params"])
+            Obs = torch.tensor(np.array(file['obstacles']))
+            last_snap = list(file['snapshots'])[-1]
+            Part = torch.tensor(np.array(file['snapshots'][last_snap]))
+            t0 = file['snapshots'][last_snap].attrs['time']
+        NewSim = cls(sim_params["alignment sensitivity"], sim_params["migration rate"], lattice_params["width"],
+                     lattice_params["height"], sim_params["density"], sim_params["flow parameters"], init_time=t0, init_part=Part, obstacles=Obs)
+        return NewSim
+
+    def get_params(self) -> dict:
+        """
+        Get the parameters of the simulation.
+        :return: A dictionary of the simulation parameters.
+        """
+        return {
+            "density": self.density,
+            "alignment sensitivity": self.g,
+            "migration rate": self.v0,
+            "flow parameters": self.flow_params
+        }
+        
     def add_particle(self, x: int, y: int, orientation: Orientation = None) -> None:
         """
         Add a particle at the specified location.
