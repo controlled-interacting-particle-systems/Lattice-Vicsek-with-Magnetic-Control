@@ -60,7 +60,7 @@ class Event(NamedTuple):
 class Simulation:
     def __init__(
         self, g: float, v0: float, width: int, height: int, density: float, flow_params: Optional[dict] = None,
-        init_time: Optional[float] = 0.0, init_part: torch.float32 = None, obstacles: torch.float32 = None) -> None:
+        init_time: Optional[float] = 0.0, init_part: torch.float32 = None, obstacles: torch.float32 = None, with_transport: bool=True) -> None:
         """
         Initialize the simulation with a given lattice, magnetic field, and parameters.
 
@@ -70,8 +70,9 @@ class Simulation:
         """
         self.density = density
         self.lattice = ParticleLattice(width=width, height=height)
+        self.with_transport = with_transport
+        
         if not init_part is None:
-            self.lattice.particles = init_part
             if obstacles is None:
                 print("Warning: starting with prescribed particles but no obstacle")
             else:
@@ -79,9 +80,8 @@ class Simulation:
             for x in range(width):
                 for y in range(height):
                     for ior in list(Orientation):
-                        if self.lattice.particles[ior.value, y, x]:
-                            self.lattice.orientation_map[y, x] = ior
-                            self.lattice.occupancy_map[y, x] = True
+                        if init_part[ior.value, y, x]:
+                            self.lattice.add_particle(x,y,ior)
         elif not obstacles is None:
             print("Warning: starting with prescribed obstacles but no particles")
         self.magnetic_field = MagneticField()
@@ -107,7 +107,7 @@ class Simulation:
         self.initialize_rates()
         # Initialize time
         self.t = init_time
-
+        
     @classmethod
     def init_from_file(cls, fname:str) -> None:
         """
@@ -184,9 +184,10 @@ class Simulation:
         self.rates[EventType.MIGRATION.value] = self.lattice.compute_tm(self.v0)
         self.rates[EventType.BIRTH.value] = self.lattice.compute_birth_rates(self.v0)
         if self.with_flow:
-            self.rates[
-                EventType.TRANSPORT_UP.value : EventType.TRANSPORT_RIGHT.value + 1
-            ] = self.flow.compute_tm(self.lattice.occupancy_map)
+            if self.with_transport:
+                self.rates[
+                    EventType.TRANSPORT_UP.value : EventType.TRANSPORT_RIGHT.value + 1
+                ] = self.flow.compute_tm(self.lattice.occupancy_map)
             self.rates[:n_orientations] += self.flow.compute_tr(self.lattice)
 
     def update_rates(self, positions: list[Optional] = None) -> None:

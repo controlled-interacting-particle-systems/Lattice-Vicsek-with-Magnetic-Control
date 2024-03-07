@@ -42,7 +42,14 @@ def main():
     simul2 = Simulation.init_from_file(fname)
     print("Ready to start at time %f" % simul2.t)
     print(simul2.lattice.visualize_lattice())
+
+    for _ in tqdm(range(n_steps)):
+        event = simul2.run()
+    print(simul2.lattice.visualize_lattice())
+    print("Finishing simulation 2 at time %f" % simul2.t)
     
+    
+
 
 if __name__ == "__main__":
     main()
