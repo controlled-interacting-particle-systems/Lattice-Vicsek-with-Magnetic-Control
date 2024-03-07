@@ -1,4 +1,5 @@
 import torch
+import torch.nn.functional as F
 import numpy as np
 from typing import Optional, Tuple
 from lvmc.core.particle_lattice import ParticleLattice, Orientation
@@ -71,7 +72,7 @@ class Simulation:
         self.density = density
         self.lattice = ParticleLattice(width=width, height=height)
         self.with_transport = with_transport
-        
+
         if not init_part is None:
             if obstacles is None:
                 print("Warning: starting with prescribed particles but no obstacle")
@@ -294,11 +295,18 @@ class Simulation:
         :param event: The event object to be executed. It contains the event type and
                     the coordinates (x, y) on the lattice where the event occurs.
         """
+        if self.with_stat:
+            self.stat_event_counter += 1
         if event.is_reorientation():
             orientation = Orientation(event.etype.value)
             self.lattice.reorient_particle(event.x, event.y, orientation)
             return [(event.x, event.y)]
         elif event.is_migration():
+            if self.with_stat:
+                if self.lattice.orientation_map[event.y,event.x]==Orientation.RIGHT:
+                    self.stat_flux_counter[event.y] += 1
+                elif self.lattice.orientation_map[event.y,event.x]==Orientation.LEFT:
+                    self.stat_flux_counter[event.y] -= 1
             new_pos = self.lattice.move_particle(event.x, event.y)
             return [(event.x, event.y)] + new_pos
         elif event.is_birth():
@@ -343,3 +351,55 @@ class Simulation:
         :return: int - The current direction of the magnetic field.
         """
         return self.magnetic_field.get_current_direction()
+    
+    def init_stat(self) -> None:
+        """
+        Initialize statistical measurements
+        """
+        self.with_stat = True
+        self.stat_counter = 0
+        self.stat_mass = np.zeros(self.lattice.height,dtype=np.int32)
+        self.stat_order_param_pi = np.zeros((self.lattice.height,2),dtype=np.int32)
+        self.stat_order_param_psi = np.zeros(self.lattice.height,dtype=np.int32)
+        self.stat_flux_counter = np.zeros(self.lattice.height,dtype=np.int32)
+        self.stat_event_counter = 0
+
+    def perform_stat(self) -> None:
+        """
+        Perform statistical measurements
+        """
+        if self.with_stat:
+            self.stat_counter += 1
+            count_neigh = np.array(self.lattice.occupancy_map).astype(int) * (  np.array(self.lattice.occupancy_map.roll(-1,0)).astype(int)
+                                                                              + np.array(self.lattice.occupancy_map.roll(1,0)).astype(int)
+                                                                              + np.array(self.lattice.occupancy_map.roll(-1,1)).astype(int)
+                                                                              + np.array(self.lattice.occupancy_map.roll(1,1)).astype(int) )
+            for iy in range(self.lattice.height):
+                self.stat_mass[iy] += np.sum(np.array(self.lattice.occupancy_map[iy,:]).astype(int))
+                self.stat_order_param_pi[iy,0] += (  np.sum(np.array(self.lattice.orientation_map[iy,:]==Orientation.RIGHT).astype(int))
+                                                   - np.sum(np.array(self.lattice.orientation_map[iy,:]==Orientation.LEFT).astype(int)))
+                self.stat_order_param_pi[iy,1] += (  np.sum(np.array(self.lattice.orientation_map[iy,:]==Orientation.UP).astype(int))
+                                                   - np.sum(np.array(self.lattice.orientation_map[iy,:]==Orientation.DOWN).astype(int)))
+                self.stat_order_param_psi[iy]  += np.sum(count_neigh[iy,:])
+        else:
+            raise ValueError(f"perform_stat() requires initializing statistics first")
+            
+    def dump_stat(self, fname) -> None:
+        """
+        Save statitistical measurements in ascii
+        """
+        with open(fname, "a") as file:
+            pad = np.zeros((6,self.lattice.height),dtype=np.float32)
+            pad[0,0] = self.t
+            pad[0,1] = self.stat_counter
+            pad[0,2] = self.stat_event_counter
+            pad[1,:] = self.stat_mass
+            pad[2,:] = self.stat_flux_counter
+            pad[3,:] = self.stat_order_param_pi[:,0]
+            pad[4,:] = self.stat_order_param_pi[:,1]
+            pad[5,:] = self.stat_order_param_psi
+            np.savetxt(file, pad, delimiter=' ', newline='\n')
+        self.init_stat()
+    
+            
+    
