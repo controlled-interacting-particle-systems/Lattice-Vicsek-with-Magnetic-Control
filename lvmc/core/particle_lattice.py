@@ -308,7 +308,8 @@ class ParticleLattice:
         num_particles = int(density * num_cells)
 
         # Randomly place particles
-        positions = np.random.choice(num_cells, num_particles, replace=False)
+        #positions = np.random.choice(num_cells, num_particles, replace=False)
+        positions = np.random.choice(self.width * self.height, num_particles, replace=False)
 
         # Generate random orientations using the Orientation enum
         orientations = np.random.choice(list(Orientation), num_particles)

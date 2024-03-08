@@ -106,6 +106,7 @@ class Simulation:
             device=device,
         )
         self.initialize_rates()
+        self.with_stat = False
         # Initialize time
         self.t = init_time
         
