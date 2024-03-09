@@ -7,7 +7,7 @@ class TestMagneticField:
     @pytest.fixture
     def lattice(self):
         # Mock a ParticleLattice object
-        return ParticleLattice(width=5, height=3, density=0.3)
+        return ParticleLattice(width=5, height=3)
 
     def test_initialization(self):
         for direction in [-1, 0, 1]:
