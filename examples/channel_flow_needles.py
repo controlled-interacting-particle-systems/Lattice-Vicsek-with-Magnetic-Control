@@ -46,6 +46,7 @@ def main():
     count_flow = 1
     count_stat = 1
     count_dump_stat = 1
+    tlast_dump_field = 0
     count_dump_field = 1
     simulation.init_stat()
     cnt = 0
@@ -85,6 +86,7 @@ def main():
         if simulation.t-count_dump_field*dt_dump_field > dt_dump_field:
             fname_dumps = "fields_"+base_name+"_"+("%1.2f"%tlast_dump_field)+"_"+("%1.2f"%simulation.t)+".h5"
             count_dump_field += 1
+            tlast_dump_field = np.copy(simulation.t)
             data_exporter = DataExporter(fname_dumps, data_collector)
             data_exporter.export_data()
             data_collector = DataCollector(simulation)
