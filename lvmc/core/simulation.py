@@ -74,17 +74,12 @@ class Simulation:
         self.density = density
         self.lattice = ParticleLattice(width=width, height=height)
         self.magnetic_field = MagneticField()
-        if flow_params is None:
-            print("Simulation without flow")
-            self.with_flow = False
-        elif flow_params["type"] == "poiseuille":
-            print("Simulation with Poiseuille flow")
+        if flow_params is not None:
             self.flow = PoiseuilleFlow(
                 self.lattice.width, self.lattice.height, flow_params["v1"]
             )
-            self.with_flow = True
         else:
-            raise ValueError(f"Unrecognized flow type: {flow_params['type']}")
+            self.flow = None
         self.g = g
         self.v0 = v0
         self.rates = torch.zeros(
@@ -140,7 +135,7 @@ class Simulation:
         self.rates[:n_orientations] = self.lattice.compute_tr(self.g)
         self.rates[EventType.MIGRATION.value] = self.lattice.compute_tm(self.v0)
         self.rates[EventType.BIRTH.value] = self.lattice.compute_birth_rates(self.v0)
-        if self.with_flow:
+        if self.flow is not None:
             self.rates[
                 EventType.TRANSPORT_UP.value : EventType.TRANSPORT_RIGHT.value + 1
             ] = self.flow.compute_tm(self.lattice.occupancy_map)
