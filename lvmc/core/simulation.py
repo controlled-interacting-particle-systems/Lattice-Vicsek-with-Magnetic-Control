@@ -334,9 +334,11 @@ class Simulation:
         self.delta_t = self.next_event_time()
         self.t += self.delta_t
         event = self.choose_event()
-        affected_sites = self.perform_event(event)
-        # self.update_rates(affected_sites)
-        self.update_rates()
+        #JB: added to prevent bug "ValueError: Site (0, 0) is empty."
+        if not event.y == 0:
+            affected_sites = self.perform_event(event)
+            # self.update_rates(affected_sites)
+            self.update_rates()
         return event
 
     def apply_magnetic_field(self, direction: int = 0) -> None:

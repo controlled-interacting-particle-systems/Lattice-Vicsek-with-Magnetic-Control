@@ -5,19 +5,19 @@ from tqdm import tqdm
 from utils import *
 from rich import print
 import numpy as np
+import sys
 
 # Parameters for ParticleLattice
 
 width = 50
 height = 25
-g = 0.2
 v0 = 100.0
 density = 0.3
-flow_params = {"type": "poiseuille", "v1": 0.0}
+flow_params = {"type": "poiseuille", "v1": 20.0}
 tmax = 1000
-t0 = 0
+t0 = 450
     
-def main():
+def main(g: float = 0.2):
     if flow_params["v1"] == 0:
         dt_flow = 2*tmax
         base_name = "noflow_"+str(width)+"_"+str(height)+"_"+str(g)+"_"+str(v0).removesuffix('.0')
@@ -31,7 +31,7 @@ def main():
     
     # Initialize the Simulation (test if restart of not)
     if t0==0:
-        print("Starting simulation from scratch")
+        print("Starting simulation from scratch with g = %g, v1 = %g" % (g,flow_params["v1"]))
         simulation = Simulation(g, v0, width=width, height=height, density=density, flow_params=flow_params, with_transport=False)
         obstacles = torch.zeros((height, width), dtype=torch.bool)
         obstacles[0, :] = True
@@ -42,12 +42,12 @@ def main():
         simulation = Simulation.init_from_file(fname)
     data_collector = DataCollector(simulation)
     
-    tlast_flow = 0
-    count_flow = 1
-    count_stat = 1
-    count_dump_stat = 1
-    tlast_dump_field = 0
-    count_dump_field = 1
+    tlast_flow = t0
+    count_flow = int(t0/dt_flow)
+    count_stat = int(t0/dt_stat)
+    count_dump_stat = int(t0/dt_dump_stat)
+    tlast_dump_field = t0
+    count_dump_field = int(t0/dt_dump_field)
     simulation.init_stat()
     cnt = 0
     
@@ -64,11 +64,16 @@ def main():
                     cnt += Nshift[iy-1]
                     X = np.argwhere(simulation.lattice.occupancy_map[iy,:]).squeeze().tolist()
                     O = simulation.lattice.orientation_map[iy,X]
-                    for x in X:
-                        simulation.lattice.remove_particle(x,iy)
-                    for ix in range(len(X)):
-                        simulation.add_particle((X[ix]+Nshift[iy-1])%simulation.lattice.width, iy, O[ix])
-                    simulation.stat_flux_counter[iy] += Nshift[iy-1]*len(X)
+                    if isinstance(X,int):
+                        simulation.lattice.remove_particle(X,iy)
+                        simulation.add_particle((X+Nshift[iy-1])%simulation.lattice.width, iy, O)
+                        simulation.stat_flux_counter[iy] += 1
+                    else:
+                        for x in X:
+                            simulation.lattice.remove_particle(x,iy)
+                        for ix in range(len(X)):
+                            simulation.add_particle((X[ix]+Nshift[iy-1])%simulation.lattice.width, iy, O[ix])
+                        simulation.stat_flux_counter[iy] += Nshift[iy-1]*len(X)
             simulation.initialize_rates()
         
         if simulation.t-count_stat*dt_stat > dt_stat:
@@ -100,4 +105,7 @@ def main():
     data_exporter.export_data()
             
 if __name__ == "__main__":
-    main()
+    if len(sys.argv)>1:
+        main(float(sys.argv[1]))
+    else:
+        main()
