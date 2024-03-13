@@ -67,7 +67,7 @@ def main(g: float = 0.2):
                     if isinstance(X,int):
                         simulation.lattice.remove_particle(X,iy)
                         simulation.add_particle((X+Nshift[iy-1])%simulation.lattice.width, iy, O)
-                        simulation.stat_flux_counter[iy] += 1
+                        simulation.stat_flux_counter[iy] += Nshift[iy-1]
                     else:
                         for x in X:
                             simulation.lattice.remove_particle(x,iy)
