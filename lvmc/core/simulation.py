@@ -58,6 +58,7 @@ class Simulation:
         self,
         g: float,
         v0: float,
+        seed: Optional[int] = 1337,
     ) -> None:
         """
         Initialize the simulation with base parameters.
@@ -69,7 +70,9 @@ class Simulation:
         self.g = g
         self.v0 = v0
         self.n_event_types = 6  # base (1 migration and 4 reorientations + 1 birth)
-
+        self.generator = torch.Generator(device=device)
+        if seed is not None:
+            self.generator.manual_seed(seed)
         # Initialize time
         self.t = 0.0
 
@@ -82,7 +85,7 @@ class Simulation:
         """
         self.width = width
         self.height = height
-        self.lattice = ParticleLattice(width, height)
+        self.lattice = ParticleLattice(width, height, generator=self.generator)
         return self
 
     def add_control_field(self, direction: int = 0) -> None:
@@ -277,7 +280,7 @@ class Simulation:
         ), "Total rate must be positive to sample from Exponential distribution."
         random_value = 0
         while random_value == 0:
-            random_value = torch.rand(1).item()
+            random_value = torch.rand(1, generator=self.generator).item()
         return -np.log(random_value) / total_rate
 
     def choose_event(self) -> Event:
@@ -302,7 +305,7 @@ class Simulation:
             )
 
         # Generate a uniform random number between 0 and total_rate
-        random_value = torch.rand(1, device=device) * total_rate
+        random_value = torch.rand(1, device=device, generator=self.generator) * total_rate
 
         # Use cumulative sum and binary search to find the event
         cumulative_rates = torch.cumsum(rates_flat, dim=0)

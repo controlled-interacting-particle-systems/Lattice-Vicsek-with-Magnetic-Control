@@ -29,7 +29,7 @@ class ParticleLattice:
 
     NUM_ORIENTATIONS = len(Orientation)  # Class level constant
 
-    def __init__(self, width: int, height: int):
+    def __init__(self, width: int, height: int, generator: torch.Generator=None):
         """
         Initialize the particle lattice.
         :param width: Width of the lattice.
@@ -38,6 +38,7 @@ class ParticleLattice:
         """
         self.width = width
         self.height = height
+        self.generator = generator
 
         # Initialize the paricles lattice as a 3D tensor with dimensions corresponding to
         # orientations, width, and height.
@@ -261,7 +262,8 @@ class ParticleLattice:
         """
         # Validate that orientation is an instance of Orientation
         if orientation is None:
-            orientation = np.random.choice(list(Orientation))
+            ori_ind = torch.randint(0, 4, (1,), device=device, generator=self.generator).item()
+            orientation = Orientation(ori_ind)
 
         if not isinstance(orientation, Orientation):
             raise ValueError("orientation must be an instance of Orientation enum.")
@@ -303,19 +305,20 @@ class ParticleLattice:
         num_particles = int(density * num_cells)
 
         # Randomly place particles
-        positions = np.random.choice(num_cells, num_particles, replace=False)
+        # positions = np.random.choice(num_cells, num_particles, replace=False)
+        
 
         # Generate random orientations using the Orientation enum
-        orientations = np.random.choice(list(Orientation), num_particles)
+        positions = torch.randperm(num_particles, generator=self.generator)[:num_particles]
 
         n_added = 0
 
-        for pos, ori in zip(positions, orientations):
-            y, x = divmod(pos, self.width)  # Convert position to (x, y) coordinates
+        for pos in positions:
+            y, x = divmod(pos.item(), self.width)  # Convert position to (x, y) coordinates
             while self._is_obstacle(x, y) or not self._is_empty(x, y):
                 pos = np.random.choice(num_cells)
                 y, x = divmod(pos, self.width)
-            self.add_particle(x, y, ori)
+            self.add_particle(x, y)
             n_added += 1
         return n_added
 
