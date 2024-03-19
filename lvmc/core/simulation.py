@@ -6,6 +6,7 @@ from lvmc.core.magnetic_field import MagneticField
 from lvmc.core.flow import PoiseuilleFlow
 from enum import Enum, auto
 from typing import NamedTuple, List, Optional
+from typing import Tuple
 
 
 class EventType(Enum):
@@ -19,8 +20,6 @@ class EventType(Enum):
     TRANSPORT_LEFT = auto()
     TRANSPORT_DOWN = auto()
     TRANSPORT_RIGHT = auto()
-    # DEATH = auto()
-    # Future event types can be added here, e.g., TRANSPORT_BY_FLOW = auto()
 
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -59,37 +58,116 @@ class Simulation:
         self,
         g: float,
         v0: float,
-        width: int,
-        height: int,
-        density: float,
-        flow_params: Optional[dict] = None,
     ) -> None:
         """
-        Initialize the simulation with a given lattice, magnetic field, and parameters.
+        Initialize the simulation with base parameters.
 
         :param g: Alignment sensitivity parameter.
         :param v0: Base transition rate for particle movement.
-        :param lattice_params: Parameters for the lattice.
         """
-        self.density = density
-        self.lattice = ParticleLattice(width=width, height=height)
-        self.magnetic_field = MagneticField()
-        if flow_params is not None:
-            self.flow = PoiseuilleFlow(
-                self.lattice.width, self.lattice.height, flow_params["v1"]
-            )
-        else:
-            self.flow = None
+
         self.g = g
         self.v0 = v0
-        self.rates = torch.zeros(
-            (len(EventType), self.lattice.height, self.lattice.width),
-            dtype=torch.float32,
-            device=device,
-        )
-        self.initialize_rates()
+        self.n_event_types = 6  # base (1 migration and 4 reorientations + 1 birth)
+
         # Initialize time
         self.t = 0.0
+
+    def add_lattice(self, width: int, height: int) -> None:
+        """
+        Add a lattice to the simulation.
+
+        :param width: The width of the lattice.
+        :param height: The height of the lattice.
+        """
+        self.width = width
+        self.height = height
+        self.lattice = ParticleLattice(width, height)
+        return self
+
+    def add_control_field(self, direction: int = 0) -> None:
+        """
+        Add a control field to the simulation.
+
+        :param direction: The direction of the control field.
+        """
+        self.control_field = MagneticField(direction)
+        return self
+
+    def add_flow(self, flow_params: dict) -> None:
+        """
+        Add a flow to the simulation.
+
+        :param flow_params: A dictionary containing the parameters of the flow.
+        """
+        if flow_params["type"] == "Poiseuille":
+            self.flow = PoiseuilleFlow(
+                width=self.width, height=self.height, v1=flow_params["v1"]
+            )
+            print("Added Poiseuille flow to the simulation.")
+        # Increment the number of event types
+        self.n_event_types += 4
+        return self
+
+    def add_obstacles(self, obstacles: torch.Tensor) -> None:
+        """
+        Add obstacles to the lattice.
+
+        :param obstacles: A tensor representing the obstacles on the lattice.
+        """
+        # Check the shape of the obstacles tensor
+        assert obstacles.shape == (
+            self.height,
+            self.width,
+        ), "The shape of the obstacles tensor is not correct."
+        self.lattice.set_obstacles(obstacles)
+        return self
+
+    def add_sinks(self, sinks: torch.Tensor) -> None:
+        """
+        Add sinks to the lattice.
+
+        :param sinks: A tensor representing the sinks on the lattice.
+        """
+        # Check the shape of the sinks tensor
+        assert sinks.shape == (
+            self.height,
+            self.width,
+        ), "The shape of the sinks tensor is not correct."
+        self.lattice.set_sinks(sinks)
+        return self
+
+    def add_sources(self, sources: torch.Tensor) -> None:
+        """
+        Add sources to the lattice.
+
+        :param sources: A tensor representing the sources on the lattice.
+        """
+        # Check the shape of the sources tensor
+        assert sources.shape == (
+            self.height,
+            self.width,
+        ), "The shape of the sources tensor is not correct."
+        self.lattice.set_sources(sources)
+        return self
+
+    def add_particles(self, density: float) -> None:
+        """
+        Populate the lattice with particles.
+
+        :param density: The density of the particles.
+        """
+        n_added = self.lattice.populate(density)
+        print(f"Added {n_added} particles to the lattice.")
+        return self
+
+    def build(self) -> None:
+        """
+        Build the simulation.
+        """
+        self.initialize_rates()
+        self.compute_rates()
+        return self
 
     def add_particle(self, x: int, y: int, orientation: Orientation = None) -> None:
         """
@@ -131,22 +209,47 @@ class Simulation:
         """
         Initialize the rates tensor.
         """
+        self.rates = torch.zeros(
+            self.n_event_types, self.height, self.width, device=device
+        )
+
+    def compute_rates(self) -> None:
+        """
+        Compute the rates of the different events on the lattice.
+        """
+        ind_offset = 0
         n_orientations = len(Orientation)
-        self.rates[:n_orientations] = self.lattice.compute_tr(self.g)
+        self.rates[ind_offset:n_orientations] = self.lattice.compute_tr(self.g)
         self.rates[EventType.MIGRATION.value] = self.lattice.compute_tm(self.v0)
-        self.rates[EventType.BIRTH.value] = self.lattice.compute_birth_rates(self.v0)
-        if self.flow is not None:
-            self.rates[
-                EventType.TRANSPORT_UP.value : EventType.TRANSPORT_RIGHT.value + 1
-            ] = self.flow.compute_tm(self.lattice.occupancy_map)
+        ind_offset += n_orientations + 1
+        try:
+            # check that sources is an attribute of the lattice
+            assert hasattr(self.lattice, "sources")
+            self.rates[EventType.BIRTH.value] = self.lattice.compute_birth_rates(
+                self.v0
+            )
+        except AssertionError:
+            # print a warning if the sources attribute is not found but still assign the birth rate to the rates tensor
+            self.rates[EventType.BIRTH.value] = 0
+        ind_offset += 1
+
+        try:
+            # check that flow is an attribute of the simulation
+            assert hasattr(self, "flow")
+            self.rates[ind_offset : ind_offset + n_orientations] = self.flow.compute_tm(
+                self.lattice.occupancy_map
+            )
             self.rates[:n_orientations] += self.flow.compute_tr(self.lattice)
+
+        except AssertionError:
+            pass
 
     def update_rates(self, positions: list[Optional[int]] = None) -> None:
         """
         Update the rates tensor based on the current state of the lattice.
         """
         if positions is None:
-            self.initialize_rates()
+            self.compute_rates()
             return
         n_orientations = len(Orientation)
         # compute a list of the neighbours of positions
@@ -270,8 +373,6 @@ class Simulation:
         :return: An Optional tuple (event_type, x, y) representing the event, or None.
         """
         # populate the lattice on the first iteration
-        if self.t == 0:
-            self.populate_lattice(self.density)
 
         self.delta_t = self.next_event_time()
         self.t += self.delta_t
@@ -285,8 +386,8 @@ class Simulation:
         """
         Apply the magnetic field to the lattice.
         """
-        self.magnetic_field.set_direction(direction)
-        self.magnetic_field.apply(self.lattice)
+        self.control_field.set_direction(direction)
+        self.control_field.apply(self.lattice)
         self.update_rates()
 
     def get_magnetic_field_state(self) -> int:
@@ -295,4 +396,4 @@ class Simulation:
 
         :return: int - The current direction of the magnetic field.
         """
-        return self.magnetic_field.get_current_direction()
+        return self.control_field.get_current_direction()

@@ -5,8 +5,8 @@ import numpy as np
 
 
 def test_particle_lattice_initialization():
-    width, height, density = 10, 10, 0.5
-    lattice = ParticleLattice(width, height, density)
+    width, height = 10, 10
+    lattice = ParticleLattice(width, height)
 
     assert lattice.width == width
     assert lattice.height == height

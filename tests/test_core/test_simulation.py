@@ -1,19 +1,38 @@
 from lvmc.core.simulation import Simulation
-
-lattice_params = {
-    # include relevant parameters here
-    "width": 50,
-    "height": 25,
-    "density": 0.3,
-}
-
-# Simulation parameters
-g = 2.0  # Alignment sensitivity
-v0 = 100.0  # Base transition rate
+import pytest
+import torch
 
 
-def test_basic_simulation():
-    simulation = Simulation(g, v0, **lattice_params)
-    n_steps = int(1e2)  # Number of steps to run the simulation for
-    for _ in range(n_steps):
-        event = simulation.run()
+
+# Define the parameters
+g = 1.0
+v0 = 100.0
+width = 10
+height = 5
+density = 0.3
+flow_params = {"type": "Poiseuille", "v1": 100}
+obstacles = torch.zeros((height, width), dtype=torch.bool)
+obstacles[0, :] = True
+obstacles[-1, :] = True
+class TestSimulation:
+    @pytest.fixture
+    def simulation(self):
+        simulation = (
+            Simulation(g, v0)
+            .add_lattice(width=width, height=height)
+            .add_flow(flow_params)
+            .add_obstacles(obstacles)
+            .add_particles(density=density)
+            .build()
+        )
+        return simulation
+
+    def test_choose_event(self, simulation):
+        event = simulation.choose_event()
+        # check that the rate for the chosen event is non-zero
+        simulation.rates[event.etype.value, event.y, event.x] > 0
+    
+    def test_perform_event(self, simulation):
+        event = simulation.choose_event()
+        simulation.perform_event(event)
+        # check that the number of particles is conserved

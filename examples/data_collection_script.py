@@ -3,11 +3,19 @@
 from lvmc.core.simulation import Simulation
 from lvmc.data_handling.data_collector import DataCollector
 from tqdm import tqdm
-from parameters import g, v0, lattice_params
+from parameters import flow_params, g, v0, width, height, density, obstacles
 
 
 def run_simulation():
-    simulation = Simulation(g, v0, **lattice_params)
+    simulation = (
+        Simulation(g, v0)
+        .add_lattice(width=width, height=height)
+        .add_flow(flow_params)
+        .add_obstacles(obstacles)
+        .add_particles(density=density)
+        .add_control_field()
+        .build()
+    )
     data_collector = DataCollector(simulation)
 
     n_steps = int(2)  # Number of steps to run the simulation for

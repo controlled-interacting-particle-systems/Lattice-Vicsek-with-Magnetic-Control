@@ -1,3 +1,5 @@
+import torch
+
 # Parameters for ParticleLattice
 width = 10
 height = 5
@@ -10,6 +12,11 @@ v0 = 100.0  # Base transition rate
 # Flow parameters
 flow_params = {
     # include relevant parameters here
-    "type": "poiseuille",
+    "type": "Poiseuille",
     "v1": 100,
 }
+
+
+obstacles = torch.zeros((height, width), dtype=torch.bool)
+obstacles[0, :] = True
+obstacles[-1, :] = True
