@@ -29,7 +29,7 @@ class ParticleLattice:
 
     NUM_ORIENTATIONS = len(Orientation)  # Class level constant
 
-    def __init__(self, width: int, height: int, mode="default"):
+    def __init__(self, width: int, height: int):
         """
         Initialize the particle lattice.
         :param width: Width of the lattice.
@@ -38,7 +38,6 @@ class ParticleLattice:
         """
         self.width = width
         self.height = height
-        self.mode = mode
 
         # Initialize the paricles lattice as a 3D tensor with dimensions corresponding to
         # orientations, width, and height.
@@ -47,7 +46,7 @@ class ParticleLattice:
         )
         self.obstacles = torch.zeros((height, width), dtype=torch.bool, device=device)
         self.sinks = torch.zeros((height, width), dtype=torch.bool, device=device)
-        self.sources = torch.zeros((height, width), dtype=torch.bool, device=device)
+
         # Initialize an array to store orientations of particles
         self.orientation_map = np.full(
             (height, width), None
@@ -189,8 +188,7 @@ class ParticleLattice:
         ValueError: If the specified cell is an obstacle.
         ValueError: If the specified cell is a non-empty.
         """
-        if self.mode == "optimized":
-            return
+
         self._validate_coordinates(x, y)
         if self._is_obstacle(x, y):
             raise ValueError(f"Site ({x}, {y}) is an obstacle.")
@@ -209,8 +207,7 @@ class ParticleLattice:
         IndexError: If the coordinates are out of the lattice bounds.
         ValueError: If the specified cell is empty.
         """
-        if self.mode == "optimized":
-            return
+
         self._validate_coordinates(x, y)
         if self._is_empty(x, y):
             raise ValueError(f"Site ({x}, {y}) is empty.")
