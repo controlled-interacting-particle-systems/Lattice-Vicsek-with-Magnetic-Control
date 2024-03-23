@@ -29,7 +29,7 @@ class ParticleLattice:
 
     NUM_ORIENTATIONS = len(Orientation)  # Class level constant
 
-    def __init__(self, width: int, height: int, generator: torch.Generator=None):
+    def __init__(self, width: int, height: int, generator: torch.Generator = None):
         """
         Initialize the particle lattice.
         :param width: Width of the lattice.
@@ -262,7 +262,9 @@ class ParticleLattice:
         """
         # Validate that orientation is an instance of Orientation
         if orientation is None:
-            ori_ind = torch.randint(0, 4, (1,), device=device, generator=self.generator).item()
+            ori_ind = torch.randint(
+                0, 4, (1,), device=device, generator=self.generator
+            ).item()
             orientation = Orientation(ori_ind)
 
         if not isinstance(orientation, Orientation):
@@ -302,21 +304,22 @@ class ParticleLattice:
         :return: The number of particles added to the lattice.
         """
         num_cells = self.width * self.height - self.obstacles.sum().item()
+        num_cells = int(num_cells)
         num_particles = int(density * num_cells)
 
-        # Randomly place particles
-        # positions = np.random.choice(num_cells, num_particles, replace=False)
-        
-
         # Generate random orientations using the Orientation enum
-        positions = torch.randperm(num_particles, generator=self.generator)[:num_particles]
+        positions = torch.randperm(num_cells, generator=self.generator)[:num_particles]
 
         n_added = 0
 
         for pos in positions:
-            y, x = divmod(pos.item(), self.width)  # Convert position to (x, y) coordinates
+            y, x = divmod(
+                pos.item(), self.width
+            )  # Convert position to (x, y) coordinates
             while self._is_obstacle(x, y) or not self._is_empty(x, y):
-                pos = np.random.choice(num_cells)
+                pos = torch.randint(
+                    num_cells, (1,), device=device, generator=self.generator
+                ).item()
                 y, x = divmod(pos, self.width)
             self.add_particle(x, y)
             n_added += 1

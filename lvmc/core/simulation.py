@@ -305,7 +305,9 @@ class Simulation:
             )
 
         # Generate a uniform random number between 0 and total_rate
-        random_value = torch.rand(1, device=device, generator=self.generator) * total_rate
+        random_value = (
+            torch.rand(1, device=device, generator=self.generator) * total_rate
+        )
 
         # Use cumulative sum and binary search to find the event
         cumulative_rates = torch.cumsum(rates_flat, dim=0)
