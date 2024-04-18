@@ -9,22 +9,26 @@ import sys
 
 # Parameters for ParticleLattice
 
-width = 50
-height = 25
-v0 = 100.0
+seed = 3179
+torch.manual_seed(seed)
+np.random.seed(seed)
+
+height = int(sys.argv[1])
+width = int(sys.argv[2])
+v0 = float(sys.argv[3])
 density = 0.3
-flow_params = {"type": "poiseuille", "v1": 20.0}
-tmax = 1000
-t0 = 450
+flow_params = {"type": "poiseuille", "v1": float(sys.argv[4])}
+tmax = 500
+t0 = 0
     
-def main(g: float = 0.2):
-    if flow_params["v1"] == 0:
+def main(g: float = float(sys.argv[5])):
+    if flow_params["v1"] == 0.:
         dt_flow = 2*tmax
         base_name = "noflow_"+str(width)+"_"+str(height)+"_"+str(g)+"_"+str(v0).removesuffix('.0')
     else: 
         dt_flow = 0.1/flow_params["v1"]
         base_name = flow_params["type"]+"_"+str(width)+"_"+str(height)+"_"+str(g)+"_"+str(v0).removesuffix('.0')+"_"+str(flow_params["v1"]).removesuffix('.0')
-    fname_stats = "stat_"+base_name+".txt"
+    fname_stats = "file_output/" + "stat_"+base_name+ "seed%d"%(seed) + ".txt"
     dt_stat = 0.1
     dt_dump_stat = 5
     dt_dump_field = 50
@@ -38,7 +42,7 @@ def main(g: float = 0.2):
         obstacles[-1, :] = True
         simulation.lattice.set_obstacles(obstacles)
     else:
-        fname =  "fields_"+base_name+"_"+("%1.2f"%(t0-dt_dump_field))+"_"+("%1.2f"%t0)+".h5"
+        fname =  "file_output/" + "fields_"+base_name+"_"+("%1.2f"%(t0-dt_dump_field))+"_"+("%1.2f"%t0)+ "seed%d"%(seed) +".h5"
         simulation = Simulation.init_from_file(fname)
     data_collector = DataCollector(simulation)
     
@@ -89,7 +93,7 @@ def main(g: float = 0.2):
             simulation.dump_stat(fname_stats)
             
         if simulation.t-count_dump_field*dt_dump_field > dt_dump_field:
-            fname_dumps = "fields_"+base_name+"_"+("%1.2f"%tlast_dump_field)+"_"+("%1.2f"%simulation.t)+".h5"
+            fname_dumps = "file_output/" +"fields_"+base_name+"_"+("%1.2f"%tlast_dump_field)+"_"+("%1.2f"%simulation.t)+"seed%d"%(seed) +".h5"
             count_dump_field += 1
             tlast_dump_field = np.copy(simulation.t)
             data_exporter = DataExporter(fname_dumps, data_collector)
@@ -100,12 +104,12 @@ def main(g: float = 0.2):
     print("t = %f, Performed %d shifts" % (simulation.t,cnt))
     data_collector.collect_snapshot()
     simulation.dump_stat(fname_stats)
-    fname_dumps = "fields_"+base_name+"_"+("%1.2f"%tlast_dump_field)+"_"+("%1.2f"%simulation.t)+".h5"
+    fname_dumps = "file_output/" + "fields_"+base_name+"_"+("%1.2f"%tlast_dump_field)+"_"+("%1.2f"%simulation.t)+"seed%d"%(seed) +".h5"
     data_exporter = DataExporter(fname_dumps, data_collector)
     data_exporter.export_data()
             
 if __name__ == "__main__":
     if len(sys.argv)>1:
-        main(float(sys.argv[1]))
+        main(float(sys.argv[5]))
     else:
         main()
