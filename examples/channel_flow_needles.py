@@ -13,11 +13,11 @@ width = 50
 height = 25
 v0 = 100.0
 density = 0.3
-flow_params = {"type": "poiseuille", "v1": 20.0}
+flow_params = {"type": "poiseuille", "v1": 0}
 tmax = 1000
-t0 = 450
+t0 = 0
     
-def main(g: float = 0.2):
+def main(g: float = 1.6):
     if flow_params["v1"] == 0:
         dt_flow = 2*tmax
         base_name = "noflow_"+str(width)+"_"+str(height)+"_"+str(g)+"_"+str(v0).removesuffix('.0')
@@ -79,7 +79,7 @@ def main(g: float = 0.2):
         if simulation.t-count_stat*dt_stat > dt_stat:
             count_stat += 1
             simulation.perform_stat()
-            print(simulation.lattice.visualize_lattice())
+            #print(simulation.lattice.visualize_lattice())
             print("t = %f, Performed %d shifts" % (simulation.t,cnt))
             cnt = 0
             data_collector.collect_snapshot()
@@ -96,7 +96,7 @@ def main(g: float = 0.2):
             data_exporter.export_data()
             data_collector = DataCollector(simulation)
     
-    print(simulation.lattice.visualize_lattice())
+    #print(simulation.lattice.visualize_lattice())
     print("t = %f, Performed %d shifts" % (simulation.t,cnt))
     data_collector.collect_snapshot()
     simulation.dump_stat(fname_stats)
