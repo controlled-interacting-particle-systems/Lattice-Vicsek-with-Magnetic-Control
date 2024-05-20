@@ -1,5 +1,6 @@
 # data_collector.py
 
+import numpy as np
 from lvmc.core.simulation import Simulation, Event
 
 
@@ -30,7 +31,7 @@ class DataCollector:
         The snapshot includes the current time and the state of the lattice.
         """
         self.data["snapshots"].append(
-            (self.simulation.t, self.simulation.lattice.query_lattice_state())
+            (np.copy(self.simulation.t), np.copy(self.simulation.lattice.query_lattice_state()))
         )
 
     def collect_event(self, event: "Event") -> None:

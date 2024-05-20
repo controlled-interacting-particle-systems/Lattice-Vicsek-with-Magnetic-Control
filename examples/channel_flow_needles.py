@@ -83,7 +83,7 @@ def main(g: float = float(sys.argv[5])):
         if simulation.t-count_stat*dt_stat > dt_stat:
             count_stat += 1
             simulation.perform_stat()
-            print(simulation.lattice.visualize_lattice())
+            #print(simulation.lattice.visualize_lattice())
             print("t = %f, Performed %d shifts" % (simulation.t,cnt))
             cnt = 0
             data_collector.collect_snapshot()
@@ -100,7 +100,7 @@ def main(g: float = float(sys.argv[5])):
             data_exporter.export_data()
             data_collector = DataCollector(simulation)
     
-    print(simulation.lattice.visualize_lattice())
+    #print(simulation.lattice.visualize_lattice())
     print("t = %f, Performed %d shifts" % (simulation.t,cnt))
     data_collector.collect_snapshot()
     simulation.dump_stat(fname_stats)

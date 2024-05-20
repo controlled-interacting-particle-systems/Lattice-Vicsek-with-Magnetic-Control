@@ -129,6 +129,28 @@ class Simulation:
                      lattice_params["height"], sim_params["density"], sim_params["flow parameters"], init_time=t0, init_part=Part, obstacles=Obs)
         return NewSim
 
+    @classmethod
+    def init_config_from_file(cls, fname:str, g: float, v0: float, flow: Optional[dict] = None, t0: Optional[float] = 0.0) -> None:
+        """
+        Initialize the simulation from hdf5 file.
+        
+        :param fname: file name
+        :param g: Alignment sensitivity parameter.
+        :param v0: Base transition rate for particle movement.
+        :param flow: Flow type
+        :param t0: Initial time
+        """
+        print("Initializing simulation from file", fname)
+        with h5py.File(fname, "r") as file:
+            sim_params = json.loads(file.attrs["simulation_params"])
+            lattice_params = json.loads(file.attrs["lattice_params"])
+            Obs = torch.tensor(np.array(file['obstacles']))
+            last_snap = list(file['snapshots'])[-1]
+            Part = torch.tensor(np.array(file['snapshots'][last_snap]))
+            t0 = file['snapshots'][last_snap].attrs['time']
+        NewSim = cls(g, v0, lattice_params["width"], lattice_params["height"], sim_params["density"], flow_params=flow, init_time=t0, init_part=Part, obstacles=Obs)
+        return NewSim
+
     def get_params(self) -> dict:
         """
         Get the parameters of the simulation.
@@ -328,7 +350,7 @@ class Simulation:
         :return: An Optional tuple (event_type, x, y) representing the event, or None.
         """
         # populate the lattice on the first iteration
-        if self.t == 0:
+        if self.lattice.particles.sum().item() == 0:
             self.populate_lattice(self.density)
         
         self.delta_t = self.next_event_time()
