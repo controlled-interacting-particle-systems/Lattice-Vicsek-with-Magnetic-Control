@@ -164,6 +164,48 @@ class Simulation:
         print(f"Added {n_added} particles to the lattice.")
         return self
 
+    def add_particles_from_list(self, part_up, part_left, part_down, part_right) -> None:
+        """
+        Populate the lattice with particles from lists.
+
+        :param part_up: List of particle positions with an up orientation.
+        :param part_left: List of particle positions with a left orientation.
+        :param part_down: List of particle positions with a down orientation.
+        :param part_right: List of particle positions with a right orientation.
+        """
+        ntot = 0
+        if len(part_up) == 2:
+            if any(len(row) != len(part_up[0]) for row in part_up):
+                raise ValueError("Input part_up must be a table with 2 rows and equal number of columns in each row")
+            n_up = len(part_up[0])
+            for i in range(n_up):
+                self.lattice.add_particle(part_up[0][i],part_up[1][i],Orientation.UP)
+            ntot += n_up
+        if len(part_left) == 2:
+            if any(len(row) != len(part_left[0]) for row in part_left):
+                raise ValueError("Input part_left must be a table with 2 rows and equal number of columns in each row")
+            n_left = len(part_left[0])
+            for i in range(n_left):
+                self.lattice.add_particle(part_left[0][i],part_left[1][i],Orientation.LEFT)
+            ntot += n_left
+        if len(part_down) == 2:
+            if any(len(row) != len(part_down[0]) for row in part_down):
+                raise ValueError("Input part_down must be a table with 2 rows and equal number of columns in each row")
+            n_down = len(part_down[0])
+            for i in range(n_down):
+                self.lattice.add_particle(part_down[0][i],part_down[1][i],Orientation.DOWN)
+            ntot += n_down
+        if len(part_right) == 2:
+            if any(len(row) != len(part_right[0]) for row in part_right):
+                raise ValueError("Input part_right must be a table with 2 rows and equal number of columns in each row")
+            n_right = len(part_right[0])
+            for i in range(n_right):
+                self.lattice.add_particle(part_right[0][i],part_right[1][i],Orientation.RIGHT)
+            ntot += n_right
+        
+        print(f"Added {ntot} particles to the lattice.")
+        return self
+
     def build(self) -> None:
         """
         Build the simulation.
