@@ -1,7 +1,7 @@
 import torch
-h = 8
+h = 6
 lb = int(1.5*h)
-lc = 3*h
+lc = 4*h
 
 # Parameters for ParticleLattice
 width = h+lc+2
@@ -23,9 +23,9 @@ sinks[(lb+1):(lb+h+1),0]  = True
 
 X = []
 Y = []
-Y1 = list(range(lb+2,lb+h+2,2))
-Y2 = list(range(lb+1,lb+h+1,2))
-for i in range(4):
+Y1 = list(range(lb+1,lb+h+1,1))
+Y2 = Y1
+for i in range(12):
     X = X+[2*i+1]*len(Y1)+[2*i+2]*len(Y2)
     Y = Y+Y1+Y2
 list_part_right = [X, Y]

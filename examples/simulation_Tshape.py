@@ -12,7 +12,7 @@ def main():
     # Initialize the Simulation
     print(list_part_right)
     simulation = (
-        Simulation(g, v0, seed=1298)
+        Simulation(g, v0, seed=81238)
         .add_lattice(width=width, height=height)
         .add_obstacles(obstacles)
         .add_sinks(sinks)
@@ -20,7 +20,7 @@ def main():
         # .build()
     )
     Stat = []
-    for ireal in range(2):
+    for ireal in range(1000):
         this_real = []
         simulation.t=0
         simulation.add_particles_from_list([],[],[],list_part_right)
@@ -57,7 +57,6 @@ def main():
         print(f" absorbed by down sink:  {n_sink_down}")
         print(f" absorbed by upper sink: {n_sink_up}")
         Stat.append(this_real)
-    print(Stat)
     with open("stat_Tshape.txt", "w") as file:
         for sublist in Stat:
             line = ' '.join(map(str, sublist))
