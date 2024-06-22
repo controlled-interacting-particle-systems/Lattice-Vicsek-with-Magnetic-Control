@@ -291,24 +291,13 @@ class Simulation:
 
     def update_rates(self, positions: list[Optional[int]] = None) -> None:
         """
-        Update the rates tensor based on the current state of the lattice.
+        Update the rates tensor for particles at the specified positions.
+        :param positions: A list of tuples (x, y) representing the positions of the particles.
         """
         if positions is None:
             self.compute_rates()
-            return
-        n_orientations = len(Orientation)
-        # compute a list of the neighbours of positions
-        affected_cells = positions
-        for index in range(len(positions)):
-            affected_cells += self.lattice.get_neighbours(*positions[index])
-
-        for x, y in affected_cells:
-            self.rates[:n_orientations, y, x] = self.lattice.compute_local_tr(
-                x, y, self.g
-            )
-            self.rates[n_orientations, y, x] = self.lattice.compute_local_tm(
-                x, y, self.v0
-            )
+        else:
+            pass # TODO: Implement the update_rates method for specific positions
 
     def next_event_time(self) -> float:
         """
