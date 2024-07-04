@@ -154,14 +154,19 @@ class Simulation:
         self.lattice.set_sources(sources)
         return self
 
-    def add_particles(self, density: float) -> None:
+    def add_particles(self, density: Optional[float]=None, **kwargs) -> None:
         """
         Populate the lattice with particles.
 
         :param density: The density of the particles.
         """
-        n_added = self.lattice.populate(density)
-        print(f"Added {n_added} particles to the lattice.")
+        if density is not None:
+            n_added = self.lattice.populate(density)
+        if "region" in kwargs:
+            region = kwargs["region"]
+            orientation = kwargs["orientation"]
+            self.lattice.populate_region(region, orientation)
+            
         return self
 
     def add_particles_from_list(self, part_up, part_left, part_down, part_right) -> None:

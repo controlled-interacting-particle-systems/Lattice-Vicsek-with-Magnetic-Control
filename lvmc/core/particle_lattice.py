@@ -358,6 +358,27 @@ class ParticleLattice:
 
             n_added += 1
         return n_added
+    def populate_region(self, region: Tuple[int, int, int, int], orientation: Orientation) -> int:
+        """
+        Populate a region of the lattice with particles of a given orientation.
+
+        :param region: A tuple of (x1, y1, x2, y2) representing the region to be populated.
+        :param orientation: The orientation of the particles to be added.
+        :return: The number of particles added to the lattice.
+        """
+        x1, x2, y1, y2 = region
+        if x1 < 0 or y1 < 0 or x2 >= self.width or y2 >= self.height:
+            raise ValueError(f"Region coordinates {region} are out of lattice bounds.")
+
+        n_added = 0
+        for y in range(y1, y2 + 1):
+            for x in range(x1, x2 + 1):
+                if self._is_empty(x, y) and not self._is_obstacle(x, y):
+                    self.add_particle(x, y, orientation)
+                    n_added += 1
+        return n_added
+
+
 
     def get_particle_orientation(self, x: int, y: int) -> Orientation:
         """
