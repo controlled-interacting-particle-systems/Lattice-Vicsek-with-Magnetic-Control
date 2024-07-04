@@ -8,6 +8,7 @@ from rich import print
 import numpy as np
 import sys
 
+
 def main():
     # Initialize the Simulation
     print(list_part_right)
@@ -22,8 +23,8 @@ def main():
     Stat = []
     for ireal in range(1000):
         this_real = []
-        simulation.t=0
-        simulation.add_particles_from_list([],[],[],list_part_right)
+        simulation.t = 0
+        simulation.add_particles_from_list([], [], [], list_part_right)
         simulation.build()
         print(simulation.lattice.visualize_lattice())
         n_part = simulation.lattice.particles.sum().item()
@@ -38,19 +39,19 @@ def main():
             if n_part_new < n_part:
                 if event.x == 1:
                     n_sink_left += 1
-                    this_real.extend([np.copy(simulation.t).item(),0])
+                    this_real.extend([np.copy(simulation.t).item(), 0])
                 elif event.y == 1:
                     n_sink_up += 1
-                    this_real.extend([np.copy(simulation.t).item(),1])
-                elif event.y == height-2:
+                    this_real.extend([np.copy(simulation.t).item(), 1])
+                elif event.y == height - 2:
                     n_sink_down += 1
-                    this_real.extend([np.copy(simulation.t).item(),2])
+                    this_real.extend([np.copy(simulation.t).item(), 2])
                 else:
                     print(event)
                 n_part = np.copy(n_part_new)
-            if it%100 == 0:
+            if it % 100 == 0:
                 print(simulation.lattice.visualize_lattice())
-                print('\n')
+                print("\n")
             it += 1
         print(f"Realization {ireal}, number of particles: {n_part_init}")
         print(f" absorbed by left sink:  {n_sink_left}")
@@ -59,8 +60,9 @@ def main():
         Stat.append(this_real)
     with open("stat_Tshape.txt", "w") as file:
         for sublist in Stat:
-            line = ' '.join(map(str, sublist))
-            file.write(line + '\n')
-    
+            line = " ".join(map(str, sublist))
+            file.write(line + "\n")
+
+
 if __name__ == "__main__":
     main()

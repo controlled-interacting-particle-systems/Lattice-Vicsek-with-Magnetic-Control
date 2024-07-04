@@ -278,7 +278,7 @@ class ParticleLattice:
         self.occupancy_map[y, x] = True
 
         self._update_tracking(
-            self.next_particle_id, x, y
+            int(self.next_particle_id), int(x), int(y)
         )  # update the particle tracking dictionaries
 
         self.next_particle_id += 1  # increment the next particle id
@@ -358,7 +358,10 @@ class ParticleLattice:
 
             n_added += 1
         return n_added
-    def populate_region(self, region: Tuple[int, int, int, int], orientation: Orientation) -> int:
+
+    def populate_region(
+        self, region: Tuple[int, int, int, int], orientation: Orientation
+    ) -> int:
         """
         Populate a region of the lattice with particles of a given orientation.
 
@@ -377,8 +380,6 @@ class ParticleLattice:
                     self.add_particle(x, y, orientation)
                     n_added += 1
         return n_added
-
-
 
     def get_particle_orientation(self, x: int, y: int) -> Orientation:
         """

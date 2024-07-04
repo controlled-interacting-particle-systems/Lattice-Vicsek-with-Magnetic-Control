@@ -3,7 +3,6 @@ import pytest
 import torch
 
 
-
 # Define the parameters
 g = 1.0
 v0 = 100.0
@@ -14,6 +13,8 @@ flow_params = {"type": "Poiseuille", "v1": 100}
 obstacles = torch.zeros((height, width), dtype=torch.bool)
 obstacles[0, :] = True
 obstacles[-1, :] = True
+
+
 class TestSimulation:
     @pytest.fixture
     def simulation(self):
@@ -31,7 +32,7 @@ class TestSimulation:
         event = simulation.choose_event()
         # check that the rate for the chosen event is non-zero
         simulation.rates[event.etype.value, event.y, event.x] > 0
-    
+
     def test_perform_event(self, simulation):
         event = simulation.choose_event()
         simulation.perform_event(event)

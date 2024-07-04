@@ -154,7 +154,7 @@ class Simulation:
         self.lattice.set_sources(sources)
         return self
 
-    def add_particles(self, density: Optional[float]=None, **kwargs) -> None:
+    def add_particles(self, density: Optional[float] = None, **kwargs) -> None:
         """
         Populate the lattice with particles.
 
@@ -166,10 +166,12 @@ class Simulation:
             region = kwargs["region"]
             orientation = kwargs["orientation"]
             self.lattice.populate_region(region, orientation)
-            
+
         return self
 
-    def add_particles_from_list(self, part_up, part_left, part_down, part_right) -> None:
+    def add_particles_from_list(
+        self, part_up, part_left, part_down, part_right
+    ) -> None:
         """
         Populate the lattice with particles from lists.
 
@@ -181,33 +183,47 @@ class Simulation:
         ntot = 0
         if len(part_up) == 2:
             if any(len(row) != len(part_up[0]) for row in part_up):
-                raise ValueError("Input part_up must be a table with 2 rows and equal number of columns in each row")
+                raise ValueError(
+                    "Input part_up must be a table with 2 rows and equal number of columns in each row"
+                )
             n_up = len(part_up[0])
             for i in range(n_up):
-                self.lattice.add_particle(part_up[0][i],part_up[1][i],Orientation.UP)
+                self.lattice.add_particle(part_up[0][i], part_up[1][i], Orientation.UP)
             ntot += n_up
         if len(part_left) == 2:
             if any(len(row) != len(part_left[0]) for row in part_left):
-                raise ValueError("Input part_left must be a table with 2 rows and equal number of columns in each row")
+                raise ValueError(
+                    "Input part_left must be a table with 2 rows and equal number of columns in each row"
+                )
             n_left = len(part_left[0])
             for i in range(n_left):
-                self.lattice.add_particle(part_left[0][i],part_left[1][i],Orientation.LEFT)
+                self.lattice.add_particle(
+                    part_left[0][i], part_left[1][i], Orientation.LEFT
+                )
             ntot += n_left
         if len(part_down) == 2:
             if any(len(row) != len(part_down[0]) for row in part_down):
-                raise ValueError("Input part_down must be a table with 2 rows and equal number of columns in each row")
+                raise ValueError(
+                    "Input part_down must be a table with 2 rows and equal number of columns in each row"
+                )
             n_down = len(part_down[0])
             for i in range(n_down):
-                self.lattice.add_particle(part_down[0][i],part_down[1][i],Orientation.DOWN)
+                self.lattice.add_particle(
+                    part_down[0][i], part_down[1][i], Orientation.DOWN
+                )
             ntot += n_down
         if len(part_right) == 2:
             if any(len(row) != len(part_right[0]) for row in part_right):
-                raise ValueError("Input part_right must be a table with 2 rows and equal number of columns in each row")
+                raise ValueError(
+                    "Input part_right must be a table with 2 rows and equal number of columns in each row"
+                )
             n_right = len(part_right[0])
             for i in range(n_right):
-                self.lattice.add_particle(part_right[0][i],part_right[1][i],Orientation.RIGHT)
+                self.lattice.add_particle(
+                    part_right[0][i], part_right[1][i], Orientation.RIGHT
+                )
             ntot += n_right
-        
+
         print(f"Added {ntot} particles to the lattice.")
         return self
 
@@ -302,7 +318,7 @@ class Simulation:
         if positions is None:
             self.compute_rates()
         else:
-            pass # TODO: Implement the update_rates method for specific positions
+            pass  # TODO: Implement the update_rates method for specific positions
 
     def next_event_time(self) -> float:
         """
