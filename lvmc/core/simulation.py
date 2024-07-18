@@ -58,7 +58,7 @@ class Simulation:
         self,
         g: float,
         v0: float,
-        seed: Optional[int] = 1337,
+        seed: Optional[int],
     ) -> None:
         """
         Initialize the simulation with base parameters.
