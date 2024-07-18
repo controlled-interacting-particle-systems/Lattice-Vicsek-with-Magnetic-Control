@@ -19,7 +19,7 @@ class TestSimulation:
     @pytest.fixture
     def simulation(self):
         simulation = (
-            Simulation(g, v0)
+            Simulation(g, v0, seed=1337)
             .add_lattice(width=width, height=height)
             .add_flow(flow_params)
             .add_obstacles(obstacles)
